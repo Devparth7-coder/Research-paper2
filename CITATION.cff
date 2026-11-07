@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use EVSA or ShiftBench-Sim in your research, please cite this work as below."
+title: "Evidence-Validated Strategy Adaptation for Memory-Augmented Agents Under Distribution Shift"
+authors:
+  - family-names: "Parth"
+    given-names: "Dev"
+    affiliation: "Department of Computer Science and Engineering, Madan Mohan Malaviya University of Technology, Gorakhpur, Uttar Pradesh, India"
+date-released: 2026-11-07
+version: "2.0.0"
+license: "MIT"
+abstract: >-
+  Evidence-Validated Strategy Adaptation (EVSA) is a statistical framework for
+  reliable experience validation, applicability-gated retrieval with Safe LGG,
+  and per-domain residual CUSUM drift invalidation in memory-augmented agents
+  evaluated on ShiftBench-Sim v1.0 (zero-oracle-leakage verification, v2.0.0).
+keywords:
+  - "memory-augmented agents"
+  - "sequential hypothesis testing"
+  - "distribution shift"
+  - "concept drift detection"
+  - "Bayesian credible bounds"
+  - "selective memory invalidation"
