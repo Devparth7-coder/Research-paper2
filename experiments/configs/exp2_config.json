@@ -1,0 +1,29 @@
+{
+  "experiment": "Experiment 2: Continual Learning Across Episodes",
+  "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010,
+    1011,
+    1012,
+    1013,
+    1014,
+    1015,
+    1016,
+    1017,
+    1018,
+    1019,
+    1020
+  ],
+  "num_blocks": 8,
+  "episodes_per_block": 40,
+  "total_train_episodes": 320,
+  "heldout_probe_episodes": 96
+}

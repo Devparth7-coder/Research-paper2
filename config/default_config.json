@@ -1,0 +1,86 @@
+{
+  "project": "Evidence-Validated Strategy Adaptation for Memory-Augmented Agents Under Distribution Shift",
+  "author": "Dev Parth",
+  "affiliation": "Department of Computer Science and Engineering, Madan Mohan Malaviya University of Technology, Gorakhpur, Uttar Pradesh, India",
+  "version": "2.0.0",
+  "benchmark": {
+    "name": "ShiftBench-Sim v1.0",
+    "domains": [
+      "api_orchestration",
+      "system_diagnosis",
+      "data_pipeline",
+      "resource_planning"
+    ],
+    "step_horizon_H": 4,
+    "action_cardinalities": [
+      4,
+      5,
+      4,
+      3
+    ],
+    "num_predicates": 5,
+    "governing_predicates": 3,
+    "nuisance_predicates": 2,
+    "surface_topics": 8,
+    "embedding_dim": 20,
+    "embedding_weights": {
+      "domain": 0.5,
+      "structural": 0.36,
+      "surface_topic": 0.82
+    },
+    "outcome_probabilities": {
+      "p_opt": 0.92,
+      "p_sub3": 0.28,
+      "p_sub2": 0.09,
+      "p_sub1": 0.02
+    },
+    "zero_oracle_exposure": true
+  },
+  "backbone": {
+    "type": "CalibratedSymbolicLLMBackbone",
+    "base_step_competence": 0.67,
+    "step3_prior_mode": "linear_inclusive_or",
+    "adherence_range": [
+      0.55,
+      0.96
+    ],
+    "estimated_pricing_usd_per_1m_tokens": {
+      "input": 2.5,
+      "output": 10.0,
+      "actual_commercial_api_cost_usd": 0.0
+    }
+  },
+  "evsa_hyperparameters": {
+    "sprt_p0": 0.35,
+    "sprt_p1": 0.8,
+    "nominal_alpha_fa": 0.11,
+    "nominal_beta_fr": 0.15,
+    "gamma_sprt": 0.985,
+    "min_trials": 3,
+    "beta_prior": [
+      1.0,
+      1.0
+    ],
+    "gamma_beta": 0.985,
+    "credible_delta": 0.1,
+    "tau_lcb_promote": 0.48,
+    "tau_rel_retrieve": 0.45,
+    "tau_lcb_invalidate": 0.45,
+    "min_lgg_literals": 3,
+    "lgg_discount_gamma": 0.8,
+    "salience_contrast_threshold": 0.14,
+    "retrieval_weights": {
+      "w_sem": 0.28,
+      "w_conf": 0.52,
+      "w_tier": 0.2,
+      "specificity_bonus": 0.015
+    },
+    "cusum_slack_nu": 0.12,
+    "cusum_threshold_h": 1.45,
+    "cusum_min_obs_since_reset": 3,
+    "cusum_cooldown_episodes": 12,
+    "shift_discount_gamma": 0.35,
+    "tau_quarantine_shift": 0.58,
+    "max_active_per_domain": 48
+  }
+}

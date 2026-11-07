@@ -1,0 +1,201 @@
+seed,agent,split,success_rate,exact_plan_accuracy,average_reward
+1001,Baseline A: Static,Unseen_Instances,0.275,0.1375,0.3969531249999999
+1001,Baseline A: Static,Unseen_Compositional_Archetype,0.1875,0.025,0.29578125
+1001,Baseline B: Conventional Memory,Unseen_Instances,0.3625,0.25625,0.47624999999999995
+1001,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1375,0.025,0.26109375
+1001,Baseline C: Reflection,Unseen_Instances,0.3125,0.16875,0.43499999999999994
+1001,Baseline C: Reflection,Unseen_Compositional_Archetype,0.0875,0.0125,0.21875
+1001,Baseline D: Experience Replay,Unseen_Instances,0.38125,0.25625,0.48734374999999996
+1001,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.125,0.0125,0.23546874999999995
+1001,Proposed Agent E: EVSA,Unseen_Instances,0.69375,0.6875,0.766484375
+1001,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.325,0.1875,0.47703125
+1002,Baseline A: Static,Unseen_Instances,0.25,0.125,0.38617187499999994
+1002,Baseline A: Static,Unseen_Compositional_Archetype,0.15,0.0375,0.28234375
+1002,Baseline B: Conventional Memory,Unseen_Instances,0.39375,0.25625,0.48835937499999993
+1002,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1375,0.0375,0.24578124999999998
+1002,Baseline C: Reflection,Unseen_Instances,0.325,0.21875,0.4387499999999999
+1002,Baseline C: Reflection,Unseen_Compositional_Archetype,0.15,0.025,0.28343749999999995
+1002,Baseline D: Experience Replay,Unseen_Instances,0.34375,0.2,0.45367187499999995
+1002,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.175,0.0625,0.27124999999999994
+1002,Proposed Agent E: EVSA,Unseen_Instances,0.68125,0.65625,0.756171875
+1002,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.2,0.0,0.37171875
+1003,Baseline A: Static,Unseen_Instances,0.2875,0.15,0.4203906249999999
+1003,Baseline A: Static,Unseen_Compositional_Archetype,0.2625,0.0625,0.34890625000000003
+1003,Baseline B: Conventional Memory,Unseen_Instances,0.41875,0.2875,0.5210156250000001
+1003,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1875,0.0,0.275
+1003,Baseline C: Reflection,Unseen_Instances,0.30625,0.16875,0.42710937499999996
+1003,Baseline C: Reflection,Unseen_Compositional_Archetype,0.175,0.0,0.28109375
+1003,Baseline D: Experience Replay,Unseen_Instances,0.3375,0.25,0.46109375
+1003,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.175,0.025,0.27124999999999994
+1003,Proposed Agent E: EVSA,Unseen_Instances,0.7625,0.7125,0.8188281249999999
+1003,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.3375,0.0,0.46765624999999994
+1004,Baseline A: Static,Unseen_Instances,0.2625,0.1125,0.3915625
+1004,Baseline A: Static,Unseen_Compositional_Archetype,0.1875,0.025,0.3187499999999999
+1004,Baseline B: Conventional Memory,Unseen_Instances,0.34375,0.26875,0.46296874999999993
+1004,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1125,0.0125,0.24265624999999996
+1004,Baseline C: Reflection,Unseen_Instances,0.275,0.15625,0.40242187499999993
+1004,Baseline C: Reflection,Unseen_Compositional_Archetype,0.15,0.0625,0.27140624999999996
+1004,Baseline D: Experience Replay,Unseen_Instances,0.33125,0.2375,0.4570312499999999
+1004,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.15,0.025,0.25718749999999996
+1004,Proposed Agent E: EVSA,Unseen_Instances,0.7375,0.7375,0.8025781249999999
+1004,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.225,0.025,0.38468749999999996
+1005,Baseline A: Static,Unseen_Instances,0.3125,0.14375,0.4284375000000001
+1005,Baseline A: Static,Unseen_Compositional_Archetype,0.1625,0.025,0.29812500000000003
+1005,Baseline B: Conventional Memory,Unseen_Instances,0.35,0.24375,0.46046875
+1005,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1,0.0125,0.21703124999999995
+1005,Baseline C: Reflection,Unseen_Instances,0.4,0.2875,0.49515624999999996
+1005,Baseline C: Reflection,Unseen_Compositional_Archetype,0.1375,0.0,0.26765625
+1005,Baseline D: Experience Replay,Unseen_Instances,0.325,0.20625,0.44203125
+1005,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.1,0.0125,0.21484375
+1005,Proposed Agent E: EVSA,Unseen_Instances,0.59375,0.51875,0.68015625
+1005,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.1625,0.025,0.31234375
+1006,Baseline A: Static,Unseen_Instances,0.28125,0.14375,0.40484374999999995
+1006,Baseline A: Static,Unseen_Compositional_Archetype,0.15,0.025,0.2703125
+1006,Baseline B: Conventional Memory,Unseen_Instances,0.425,0.3125,0.5278124999999999
+1006,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1375,0.025,0.24796875
+1006,Baseline C: Reflection,Unseen_Instances,0.25625,0.14375,0.38421874999999994
+1006,Baseline C: Reflection,Unseen_Compositional_Archetype,0.1375,0.025,0.26546875
+1006,Baseline D: Experience Replay,Unseen_Instances,0.35625,0.225,0.468359375
+1006,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.1125,0.0,0.21749999999999997
+1006,Proposed Agent E: EVSA,Unseen_Instances,0.74375,0.66875,0.80390625
+1006,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.275,0.1,0.4270312499999999
+1007,Baseline A: Static,Unseen_Instances,0.30625,0.1375,0.424921875
+1007,Baseline A: Static,Unseen_Compositional_Archetype,0.1625,0.0375,0.29484374999999996
+1007,Baseline B: Conventional Memory,Unseen_Instances,0.325,0.25,0.44859375
+1007,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1,0.0125,0.21265624999999994
+1007,Baseline C: Reflection,Unseen_Instances,0.25,0.14375,0.37523437499999995
+1007,Baseline C: Reflection,Unseen_Compositional_Archetype,0.1625,0.0625,0.29265624999999995
+1007,Baseline D: Experience Replay,Unseen_Instances,0.36875,0.28125,0.48523437499999994
+1007,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.1125,0.0,0.22406249999999997
+1007,Proposed Agent E: EVSA,Unseen_Instances,0.68125,0.66875,0.7583593750000001
+1007,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.275,0.0375,0.42484374999999996
+1008,Baseline A: Static,Unseen_Instances,0.34375,0.1625,0.44984375
+1008,Baseline A: Static,Unseen_Compositional_Archetype,0.1375,0.0375,0.26437499999999997
+1008,Baseline B: Conventional Memory,Unseen_Instances,0.3875,0.33125,0.50671875
+1008,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1,0.025,0.22140624999999997
+1008,Baseline C: Reflection,Unseen_Instances,0.24375,0.09375,0.362421875
+1008,Baseline C: Reflection,Unseen_Compositional_Archetype,0.125,0.0125,0.22671875
+1008,Baseline D: Experience Replay,Unseen_Instances,0.38125,0.2125,0.476953125
+1008,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.1125,0.0125,0.24265624999999996
+1008,Proposed Agent E: EVSA,Unseen_Instances,0.6125,0.5375,0.693984375
+1008,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.3625,0.2625,0.46312499999999995
+1009,Baseline A: Static,Unseen_Instances,0.2875,0.15,0.41
+1009,Baseline A: Static,Unseen_Compositional_Archetype,0.2125,0.0625,0.33062499999999995
+1009,Baseline B: Conventional Memory,Unseen_Instances,0.3375,0.275,0.467109375
+1009,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.125,0.0375,0.23874999999999996
+1009,Baseline C: Reflection,Unseen_Instances,0.3,0.2125,0.43125
+1009,Baseline C: Reflection,Unseen_Compositional_Archetype,0.35,0.1375,0.43968749999999995
+1009,Baseline D: Experience Replay,Unseen_Instances,0.34375,0.2125,0.46570312499999994
+1009,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.1625,0.025,0.28062499999999996
+1009,Proposed Agent E: EVSA,Unseen_Instances,0.65625,0.69375,0.74484375
+1009,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.4,0.25,0.5170312499999999
+1010,Baseline A: Static,Unseen_Instances,0.30625,0.18125,0.42765624999999996
+1010,Baseline A: Static,Unseen_Compositional_Archetype,0.1625,0.05,0.2981249999999999
+1010,Baseline B: Conventional Memory,Unseen_Instances,0.425,0.325,0.526171875
+1010,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1,0.0375,0.21265624999999994
+1010,Baseline C: Reflection,Unseen_Instances,0.2875,0.19375,0.41765624999999995
+1010,Baseline C: Reflection,Unseen_Compositional_Archetype,0.1,0.025,0.24874999999999994
+1010,Baseline D: Experience Replay,Unseen_Instances,0.39375,0.20625,0.49765625
+1010,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.0625,0.0,0.17515624999999996
+1010,Proposed Agent E: EVSA,Unseen_Instances,0.66875,0.63125,0.748046875
+1010,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.3625,0.2375,0.5057812500000001
+1011,Baseline A: Static,Unseen_Instances,0.2875,0.175,0.41382812500000005
+1011,Baseline A: Static,Unseen_Compositional_Archetype,0.125,0.025,0.26499999999999996
+1011,Baseline B: Conventional Memory,Unseen_Instances,0.38125,0.2875,0.48515625
+1011,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.175,0.0375,0.28874999999999995
+1011,Baseline C: Reflection,Unseen_Instances,0.3,0.16875,0.4225
+1011,Baseline C: Reflection,Unseen_Compositional_Archetype,0.1625,0.0625,0.28828124999999993
+1011,Baseline D: Experience Replay,Unseen_Instances,0.33125,0.2125,0.44117187499999994
+1011,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.125,0.025,0.25515625000000003
+1011,Proposed Agent E: EVSA,Unseen_Instances,0.6375,0.5875,0.7244531249999999
+1011,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.3,0.1375,0.45640625
+1012,Baseline A: Static,Unseen_Instances,0.31875,0.18125,0.442890625
+1012,Baseline A: Static,Unseen_Compositional_Archetype,0.1875,0.05,0.31109374999999995
+1012,Baseline B: Conventional Memory,Unseen_Instances,0.35,0.2625,0.46046875
+1012,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.15,0.025,0.28234375
+1012,Baseline C: Reflection,Unseen_Instances,0.28125,0.1625,0.40046874999999993
+1012,Baseline C: Reflection,Unseen_Compositional_Archetype,0.2,0.0625,0.33124999999999993
+1012,Baseline D: Experience Replay,Unseen_Instances,0.35625,0.25,0.47109375
+1012,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.15,0.025,0.26703124999999994
+1012,Proposed Agent E: EVSA,Unseen_Instances,0.525,0.36875,0.6321875
+1012,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.3125,0.125,0.4699999999999999
+1013,Baseline A: Static,Unseen_Instances,0.2625,0.1125,0.38390625
+1013,Baseline A: Static,Unseen_Compositional_Archetype,0.175,0.0875,0.32484375
+1013,Baseline B: Conventional Memory,Unseen_Instances,0.3875,0.28125,0.4925
+1013,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1125,0.0375,0.26125
+1013,Baseline C: Reflection,Unseen_Instances,0.25625,0.14375,0.385859375
+1013,Baseline C: Reflection,Unseen_Compositional_Archetype,0.125,0.1125,0.2759375
+1013,Baseline D: Experience Replay,Unseen_Instances,0.35,0.2125,0.46265625000000005
+1013,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.1375,0.0375,0.25890625
+1013,Proposed Agent E: EVSA,Unseen_Instances,0.5875,0.55625,0.6908593749999999
+1013,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.4125,0.25,0.548125
+1014,Baseline A: Static,Unseen_Instances,0.3125,0.1625,0.434453125
+1014,Baseline A: Static,Unseen_Compositional_Archetype,0.175,0.025,0.29968749999999994
+1014,Baseline B: Conventional Memory,Unseen_Instances,0.4,0.3,0.509921875
+1014,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1875,0.0375,0.31546874999999996
+1014,Baseline C: Reflection,Unseen_Instances,0.2625,0.1625,0.39703124999999995
+1014,Baseline C: Reflection,Unseen_Compositional_Archetype,0.2125,0.0875,0.32296874999999997
+1014,Baseline D: Experience Replay,Unseen_Instances,0.3125,0.2125,0.42734375
+1014,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.1375,0.0375,0.22937499999999997
+1014,Proposed Agent E: EVSA,Unseen_Instances,0.65,0.6125,0.735859375
+1014,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.2125,0.0,0.37218749999999995
+1015,Baseline A: Static,Unseen_Instances,0.3375,0.21875,0.4594531249999999
+1015,Baseline A: Static,Unseen_Compositional_Archetype,0.0625,0.0375,0.21343749999999995
+1015,Baseline B: Conventional Memory,Unseen_Instances,0.3375,0.2125,0.4589062499999999
+1015,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.125,0.0375,0.260625
+1015,Baseline C: Reflection,Unseen_Instances,0.2875,0.15,0.40671875
+1015,Baseline C: Reflection,Unseen_Compositional_Archetype,0.15,0.0375,0.276875
+1015,Baseline D: Experience Replay,Unseen_Instances,0.41875,0.275,0.528125
+1015,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.1,0.0375,0.22468749999999998
+1015,Proposed Agent E: EVSA,Unseen_Instances,0.81875,0.8125,0.8646874999999999
+1015,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.35,0.25,0.49765625
+1016,Baseline A: Static,Unseen_Instances,0.3875,0.23125,0.48429687499999996
+1016,Baseline A: Static,Unseen_Compositional_Archetype,0.225,0.0625,0.34531249999999997
+1016,Baseline B: Conventional Memory,Unseen_Instances,0.375,0.2875,0.4882031249999999
+1016,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.15,0.075,0.25609374999999995
+1016,Baseline C: Reflection,Unseen_Instances,0.31875,0.1375,0.4171875
+1016,Baseline C: Reflection,Unseen_Compositional_Archetype,0.2125,0.1,0.32187499999999997
+1016,Baseline D: Experience Replay,Unseen_Instances,0.3625,0.25,0.47078124999999993
+1016,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.05,0.0125,0.1703125
+1016,Proposed Agent E: EVSA,Unseen_Instances,0.59375,0.625,0.69765625
+1016,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.35,0.1375,0.49000000000000005
+1017,Baseline A: Static,Unseen_Instances,0.35,0.21875,0.46046875
+1017,Baseline A: Static,Unseen_Compositional_Archetype,0.2625,0.0375,0.36093749999999997
+1017,Baseline B: Conventional Memory,Unseen_Instances,0.35,0.25625,0.46976562499999996
+1017,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1,0.0125,0.23124999999999996
+1017,Baseline C: Reflection,Unseen_Instances,0.3375,0.23125,0.45562500000000006
+1017,Baseline C: Reflection,Unseen_Compositional_Archetype,0.25,0.0875,0.35609375
+1017,Baseline D: Experience Replay,Unseen_Instances,0.30625,0.2125,0.4418749999999999
+1017,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.125,0.0125,0.23546874999999998
+1017,Proposed Agent E: EVSA,Unseen_Instances,0.58125,0.56875,0.6857031250000001
+1017,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.3875,0.05,0.50890625
+1018,Baseline A: Static,Unseen_Instances,0.28125,0.15,0.405390625
+1018,Baseline A: Static,Unseen_Compositional_Archetype,0.2125,0.0375,0.33281249999999996
+1018,Baseline B: Conventional Memory,Unseen_Instances,0.4375,0.31875,0.5392187500000001
+1018,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.1375,0.0375,0.24359374999999997
+1018,Baseline C: Reflection,Unseen_Instances,0.26875,0.1375,0.38687499999999997
+1018,Baseline C: Reflection,Unseen_Compositional_Archetype,0.1625,0.075,0.29156249999999995
+1018,Baseline D: Experience Replay,Unseen_Instances,0.3125,0.18125,0.4371875
+1018,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.125,0.0125,0.2234375
+1018,Proposed Agent E: EVSA,Unseen_Instances,0.64375,0.5875,0.7241406249999999
+1018,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.275,0.1,0.4379687499999999
+1019,Baseline A: Static,Unseen_Instances,0.31875,0.175,0.43414062499999995
+1019,Baseline A: Static,Unseen_Compositional_Archetype,0.2125,0.0625,0.34046875
+1019,Baseline B: Conventional Memory,Unseen_Instances,0.4125,0.325,0.5142187500000001
+1019,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.15,0.075,0.27249999999999996
+1019,Baseline C: Reflection,Unseen_Instances,0.375,0.25625,0.47125000000000006
+1019,Baseline C: Reflection,Unseen_Compositional_Archetype,0.1875,0.0625,0.31109375
+1019,Baseline D: Experience Replay,Unseen_Instances,0.36875,0.2,0.478125
+1019,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.1,0.0125,0.24437499999999995
+1019,Proposed Agent E: EVSA,Unseen_Instances,0.71875,0.63125,0.781640625
+1019,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.25,0.075,0.403125
+1020,Baseline A: Static,Unseen_Instances,0.38125,0.225,0.48023437500000005
+1020,Baseline A: Static,Unseen_Compositional_Archetype,0.175,0.025,0.29859374999999994
+1020,Baseline B: Conventional Memory,Unseen_Instances,0.3625,0.225,0.475703125
+1020,Baseline B: Conventional Memory,Unseen_Compositional_Archetype,0.125,0.0375,0.24093749999999997
+1020,Baseline C: Reflection,Unseen_Instances,0.31875,0.1625,0.4270312499999999
+1020,Baseline C: Reflection,Unseen_Compositional_Archetype,0.225,0.0875,0.35078125
+1020,Baseline D: Experience Replay,Unseen_Instances,0.38125,0.21875,0.476953125
+1020,Baseline D: Experience Replay,Unseen_Compositional_Archetype,0.0875,0.0,0.20890625
+1020,Proposed Agent E: EVSA,Unseen_Instances,0.65,0.49375,0.724375
+1020,Proposed Agent E: EVSA,Unseen_Compositional_Archetype,0.45,0.275,0.5725
