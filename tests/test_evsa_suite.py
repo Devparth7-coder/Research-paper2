@@ -488,6 +488,25 @@ def test_documentation_references_exact_source_symbols() -> None:
         f"docs/ must contain strictly the 7 authoritative phase dossiers, got {actual_docs}"
     )
 
+    forbidden_duplicate_outlines = {
+        "PHASE_1_LITERATURE.md",
+        "PHASE_2_PROBLEM_AND_RQS.md",
+        "PHASE_3_MATH_AND_ARCHITECTURE.md",
+        "PHASE_4_BENCHMARK_AND_BASELINES.md",
+        "PHASE_5_EXPERIMENTS.md",
+        "PHASE_6_STATISTICS_AND_ABLATIONS.md",
+        "PHASE_7_AUDIT_AND_RELEASE.md",
+    }
+    all_md_names = {p.name for p in ROOT.rglob("*.md") if ".git" not in p.parts}
+    assert forbidden_duplicate_outlines.isdisjoint(all_md_names), (
+        f"Duplicate phase outline files remain: {sorted(forbidden_duplicate_outlines & all_md_names)}"
+    )
+
+    release_notes = sorted(p.name for p in ROOT.glob("RELEASE_NOTES_*.md"))
+    assert release_notes == ["RELEASE_NOTES_v2.0.2.md"], (
+        f"Expected strictly RELEASE_NOTES_v2.0.2.md at repo root, found {release_notes}"
+    )
+
     doc_paths = [
         ROOT / "FINAL_AUDIT_REPORT.md",
         ROOT / "REPRODUCIBILITY.md",
