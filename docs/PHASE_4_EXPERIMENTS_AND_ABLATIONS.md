@@ -1,8 +1,8 @@
-# Phase 4: Experimental Suite (`Experiments 1–5`) & Component Ablations (`v2.0.1`)
+# Phase 4: Experimental Suite (`Experiments 1–5`) & Component Ablations (`v2.0.2`)
 
 **Project**: *Evidence-Validated Strategy Adaptation for Memory-Augmented Agents Under Distribution Shift*  
-**Author**: Dev Parth (Department of Computer Science and Engineering, MMMUT, Gorakhpur, Uttar Pradesh, India)  
-**Release Version**: `v2.0.1` | **Date**: 7 November 2026  
+**Author**: Dev Parth — Independent Researcher (*Independent Research in Artificial Intelligence*)  
+**Release Version**: `v2.0.2` | **Date**: 9 November 2026  
 
 ---
 
@@ -28,9 +28,9 @@ All core experiments execute deterministically across $N = 20$ primary seeds (`1
 
 ### Experiment 4: Symmetric Feedback Corruption ($\eta \in \{0.10, 0.25, 0.35\}$)
 - **Sequential Calibration**: Rollout FAR is restricted to **`1.34%`, `1.76%`, and `2.53%`** and Candidate FPR to **`8.08%`, `8.64%`, and `11.32%`** (closely tracking nominal $\alpha_{\mathrm{FA}} = 11\%$).
-- **Contamination & Recovery**: Active noisy-phase FDP (`35.46%`, `46.36%`, `68.29%`) is lower than all memory baselines across all 9 pairs under per-family Holm ($p_{\mathrm{Holm}} \le 0.0063$; at $\eta=0.35$, global-74 $p_{\mathrm{Glob74}} = 0.0510$ borderline vs. `ConvMem` due to `65.44%` FRR shrinking clean promoted rules to `2.15`), before clean feedback slashes FDP to **`21.79%–30.60%`** and restores **`84.10%`, `77.30%`, and `74.90%`** recovery SR ($p_{\mathrm{Holm}} \le 1.95 \times 10^{-9}$).
+- **Contamination & Recovery**: Active noisy-phase FDP (`35.46%`, `46.36%`, `68.29%`) is lower than all memory baselines across all 9 pairs under per-family Holm ($p_{\mathrm{Holm}} \le 0.0063$; at $\eta=0.35$, direct Global-74 primary $p_{\mathrm{Glob74}} = 0.0510$ borderline vs. `ConvMem` due to `65.44%` FRR shrinking clean promoted rules to `2.15`), before clean feedback slashes FDP to **`21.79%–30.60%`** and restores **`84.10%`, `77.30%`, and `74.90%`** recovery SR (primary $p_{\mathrm{Holm}} \le 8.78 \times 10^{-5}$, paired-$t$ $p_{t,\mathrm{Holm}} \le 1.95 \times 10^{-9}$).
 
 ### Experiment 5: Leave-One-Out Component Ablations (`360` Episodes, $\eta = 0.15$ + Shift)
-- **`w/o Applicability Conditions`**: Catastrophic `-24.75 pp` stream SR collapse (`53.81% -> 29.06%`, $p_{\mathrm{Holm}} = 4.35 \times 10^{-14}$, `90.0%` pre-shift FDP).
+- **`w/o Applicability Conditions`**: Catastrophic `-24.75 pp` stream SR collapse (`53.81% -> 29.06%`, primary Wilcoxon $p_{\mathrm{Holm}} = 4.42 \times 10^{-4}$, paired-$t$ $p_{t,\mathrm{Holm}} = 4.35 \times 10^{-14}$, `90.0%` pre-shift FDP).
 - **`w/o Shift Detection`**: `-8.92 pp` post-shift recovered SR drop (`58.58% -> 49.67%`, $p_{\mathrm{Holm}} = 0.0037, p_{\mathrm{Glob74}} = 0.0175$) and `-2.25 pp` overall stream SR drop ($p_{\mathrm{Holm}} = 0.0464$ per-family; $p_{\mathrm{Glob74}} = 0.1508$ global-74).
 - **Short-Horizon Purity vs. Coverage Trade-Offs**: `w/o Evidence Validation` (`55.51%` stream SR, $p_{\mathrm{Holm}} = 0.684$ ns) inflates active contamination $>2\times$ (`70.56%` vs. `33.18%`) and rule count $4.8\times$ (`42.55` vs. `8.95`); `w/o Memory Invalidation` spikes post-shift FDP to `63.29%`; `w/o Confidence Estimation` reduces noisy pre-shift SR by `-1.67 pp` (`6.25` vs. `8.95` rules).

@@ -187,6 +187,10 @@ def paired_statistical_comparison(
     hedges_gz = cohens_dz * correction_j
     achieved_power = compute_paired_power(cohens_dz, n_seeds=n, alpha=0.05)
 
+    use_nonparam = float(shapiro_p) < 0.05
+    primary_test = "Wilcoxon signed-rank" if use_nonparam else "Paired t-test"
+    primary_pvalue_raw = float(w_p) if use_nonparam else float(t_p)
+
     return {
         "proposed": proposed_label,
         "comparator": comparator_label,
@@ -205,6 +209,8 @@ def paired_statistical_comparison(
         "t_pvalue": t_p,
         "wilcoxon_stat": w_stat,
         "wilcoxon_pvalue": w_p,
+        "primary_test": primary_test,
+        "primary_pvalue_raw": primary_pvalue_raw,
         "cohens_dz": float(cohens_dz),
         "hedges_gz": float(hedges_gz),
         "rank_biserial_r": float(rank_biserial),
@@ -212,57 +218,96 @@ def paired_statistical_comparison(
     }
 
 
+def _select_primary_raw_pvalue(row: Dict[str, Any]) -> Tuple[str, float]:
+    """Select the pre-specified primary test and raw p-value from Shapiro-Wilk diagnostic."""
+    use_nonparam = float(row["shapiro_p"]) < 0.05
+    p_test = "Wilcoxon signed-rank" if use_nonparam else "Paired t-test"
+    p_raw = float(row["wilcoxon_pvalue"]) if use_nonparam else float(row["t_pvalue"])
+    return p_test, p_raw
+
+
 def apply_holm_bonferroni(comparisons: List[Dict[str, Any]], alpha: float = 0.05) -> List[Dict[str, Any]]:
+    """
+    Apply Holm (1979) step-down adjustment within a pre-defined hypothesis family:
+    1. Primary hypothesis family: applies Holm ONCE directly to the vector of selected
+       `primary_pvalue_raw` values (`primary_pvalue_holm`, `significant_at_05`).
+    2. Pure-parametric and pure-nonparametric sensitivity families: separately adjusts
+       all paired-t p-values (`sensitivity_t_pvalue_holm` / `t_pvalue_holm`) and all
+       Wilcoxon p-values (`sensitivity_wilcoxon_pvalue_holm` / `wilcoxon_pvalue_holm`).
+    """
     if not comparisons:
         return comparisons
-    t_pvals = [c["t_pvalue"] for c in comparisons]
-    w_pvals = [c["wilcoxon_pvalue"] for c in comparisons]
+    primary_pairs = [_select_primary_raw_pvalue(c) for c in comparisons]
+    prim_pvals = [p for _, p in primary_pairs]
+    t_pvals = [float(c["t_pvalue"]) for c in comparisons]
+    w_pvals = [float(c["wilcoxon_pvalue"]) for c in comparisons]
 
+    prim_rej, prim_adj = _holm_adjust(prim_pvals, alpha=alpha)
     t_rej, t_adj = _holm_adjust(t_pvals, alpha=alpha)
     w_rej, w_adj = _holm_adjust(w_pvals, alpha=alpha)
 
     enriched: List[Dict[str, Any]] = []
     for idx, comp in enumerate(comparisons):
         row = dict(comp)
+        p_test, p_raw = primary_pairs[idx]
+        row["primary_test"] = p_test
+        row["primary_pvalue_raw"] = float(p_raw)
+        row["primary_pvalue_holm"] = float(prim_adj[idx])
+        row["significant_at_05"] = bool(prim_rej[idx])
+
+        # Clearly labelled pure-test sensitivity families (plus legacy aliases)
+        row["sensitivity_t_pvalue_holm"] = float(t_adj[idx])
+        row["sensitivity_t_significant_holm"] = bool(t_rej[idx])
         row["t_pvalue_holm"] = float(t_adj[idx])
         row["t_significant_holm"] = bool(t_rej[idx])
+
+        row["sensitivity_wilcoxon_pvalue_holm"] = float(w_adj[idx])
+        row["sensitivity_wilcoxon_significant_holm"] = bool(w_rej[idx])
         row["wilcoxon_pvalue_holm"] = float(w_adj[idx])
         row["wilcoxon_significant_holm"] = bool(w_rej[idx])
-        use_nonparam = row["shapiro_p"] < 0.05
-        row["primary_test"] = "Wilcoxon signed-rank" if use_nonparam else "Paired t-test"
-        row["primary_pvalue_holm"] = row["wilcoxon_pvalue_holm"] if use_nonparam else row["t_pvalue_holm"]
-        row["significant_at_05"] = row["wilcoxon_significant_holm"] if use_nonparam else row["t_significant_holm"]
         enriched.append(row)
     return enriched
 
 
 def apply_global_holm_bonferroni(comparisons: List[Dict[str, Any]], alpha: float = 0.05) -> List[Dict[str, Any]]:
     """
-    Simultaneous global Holm-Bonferroni adjustment across ALL pooled hypothesis tests
-    (e.g., all M = 74 comparisons across the entire study), complementing per-family
-    Holm-Bonferroni columns.
+    Simultaneous global Holm-Bonferroni adjustment across ALL M = 74 study comparisons:
+    1. Primary global-74 family: applies Holm ONCE directly to the 74 selected
+       `primary_pvalue_raw` values (`primary_pvalue_holm_global74`, `significant_global74_at_05`),
+       rather than splicing separately adjusted parametric and non-parametric vectors.
+    2. Separate global-74 sensitivity families: clearly labelled all-paired-t
+       (`sensitivity_t_pvalue_holm_global74`) and all-Wilcoxon
+       (`sensitivity_wilcoxon_pvalue_holm_global74`) pooled adjustments.
     """
     if not comparisons:
         return comparisons
-    t_pvals = [c["t_pvalue"] for c in comparisons]
-    w_pvals = [c["wilcoxon_pvalue"] for c in comparisons]
+    primary_pairs = [_select_primary_raw_pvalue(c) for c in comparisons]
+    prim_pvals = [p for _, p in primary_pairs]
+    t_pvals = [float(c["t_pvalue"]) for c in comparisons]
+    w_pvals = [float(c["wilcoxon_pvalue"]) for c in comparisons]
 
+    prim_rej_g, prim_adj_g = _holm_adjust(prim_pvals, alpha=alpha)
     t_rej_g, t_adj_g = _holm_adjust(t_pvals, alpha=alpha)
     w_rej_g, w_adj_g = _holm_adjust(w_pvals, alpha=alpha)
 
     enriched: List[Dict[str, Any]] = []
     for idx, comp in enumerate(comparisons):
         row = dict(comp)
+        p_test, p_raw = primary_pairs[idx]
+        row["primary_test"] = p_test
+        row["primary_pvalue_raw"] = float(p_raw)
+        row["primary_pvalue_holm_global74"] = float(prim_adj_g[idx])
+        row["significant_global74_at_05"] = bool(prim_rej_g[idx])
+
+        # Clearly labelled global-74 sensitivity families (plus legacy column aliases)
+        row["sensitivity_t_pvalue_holm_global74"] = float(t_adj_g[idx])
+        row["sensitivity_t_significant_holm_global74"] = bool(t_rej_g[idx])
         row["t_pvalue_holm_global74"] = float(t_adj_g[idx])
         row["t_significant_holm_global74"] = bool(t_rej_g[idx])
+
+        row["sensitivity_wilcoxon_pvalue_holm_global74"] = float(w_adj_g[idx])
+        row["sensitivity_wilcoxon_significant_holm_global74"] = bool(w_rej_g[idx])
         row["wilcoxon_pvalue_holm_global74"] = float(w_adj_g[idx])
         row["wilcoxon_significant_holm_global74"] = bool(w_rej_g[idx])
-        use_nonparam = row["shapiro_p"] < 0.05
-        row["primary_pvalue_holm_global74"] = (
-            row["wilcoxon_pvalue_holm_global74"] if use_nonparam else row["t_pvalue_holm_global74"]
-        )
-        row["significant_global74_at_05"] = (
-            row["wilcoxon_significant_holm_global74"] if use_nonparam else row["t_significant_holm_global74"]
-        )
         enriched.append(row)
     return enriched

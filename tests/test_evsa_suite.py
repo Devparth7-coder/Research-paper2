@@ -415,7 +415,9 @@ def test_statistical_power_and_holm_bonferroni() -> None:
 
 
 def test_reproducible_global74_holm_ledger() -> None:
-    """Step 1: Verify paired_hypothesis_tests_holm.csv has reproducible global-74 Holm columns."""
+    """Verify single-pass direct primary Holm (per-family & Global-74) plus labelled sensitivity families."""
+    from src.evaluation.metrics_and_stats import _holm_adjust
+
     ledger_path = ROOT / "experiments" / "statistical_analysis" / "paired_hypothesis_tests_holm.csv"
     table_path = ROOT / "tables" / "table_statistical_tests_all.csv"
     assert ledger_path.exists() and table_path.exists()
@@ -423,32 +425,55 @@ def test_reproducible_global74_holm_ledger() -> None:
     df = pd.read_csv(ledger_path)
     df_tbl = pd.read_csv(table_path)
     assert len(df) == 74
+    assert df["family"].nunique() == 19
     required_cols = {
-        "t_pvalue_holm_global74",
-        "t_significant_holm_global74",
-        "wilcoxon_pvalue_holm_global74",
-        "wilcoxon_significant_holm_global74",
+        "primary_pvalue_raw",
+        "primary_pvalue_holm",
         "primary_pvalue_holm_global74",
         "significant_global74_at_05",
+        "sensitivity_t_pvalue_holm_global74",
+        "sensitivity_t_significant_holm_global74",
+        "sensitivity_wilcoxon_pvalue_holm_global74",
+        "sensitivity_wilcoxon_significant_holm_global74",
+        "t_pvalue_holm_global74",
+        "wilcoxon_pvalue_holm_global74",
     }
     assert required_cols.issubset(df.columns)
     assert required_cols.issubset(df_tbl.columns)
 
+    # 1. Verify pre-adjustment primary selection rule
+    expected_raw = np.where(df["shapiro_p"] < 0.05, df["wilcoxon_pvalue"], df["t_pvalue"])
+    assert np.allclose(df["primary_pvalue_raw"].to_numpy(), expected_raw, atol=1e-15)
+
+    # 2. Verify each of the 19 families applies _holm_adjust directly once to primary_pvalue_raw
+    for _, grp in df.groupby("family", sort=False):
+        _, direct_fam = _holm_adjust(grp["primary_pvalue_raw"].to_numpy(), alpha=0.05)
+        assert np.allclose(grp["primary_pvalue_holm"].to_numpy(), direct_fam, atol=1e-15)
+
+    # 3. Verify Global-74 primary applies _holm_adjust directly once to all 74 primary_pvalue_raw values
+    _, direct_glob74 = _holm_adjust(df["primary_pvalue_raw"].to_numpy(), alpha=0.05)
+    assert np.allclose(df["primary_pvalue_holm_global74"].to_numpy(), direct_glob74, atol=1e-15)
+
+    # Confirm Global-74 primary is NOT a splice of separately adjusted t and Wilcoxon vectors
+    spliced_glob74 = np.where(
+        df["primary_test"] == "Wilcoxon signed-rank",
+        df["sensitivity_wilcoxon_pvalue_holm_global74"],
+        df["sensitivity_t_pvalue_holm_global74"],
+    )
+    assert not np.allclose(df["primary_pvalue_holm_global74"].to_numpy(), spliced_glob74, atol=1e-9)
+
     recomputed = pd.DataFrame(apply_global_holm_bonferroni(df.to_dict(orient="records"), alpha=0.05))
-    assert np.allclose(df["t_pvalue_holm_global74"], recomputed["t_pvalue_holm_global74"], atol=1e-15)
-    assert np.allclose(df["wilcoxon_pvalue_holm_global74"], recomputed["wilcoxon_pvalue_holm_global74"], atol=1e-15)
+    assert np.allclose(df["primary_pvalue_holm_global74"], recomputed["primary_pvalue_holm_global74"], atol=1e-15)
+    assert np.allclose(df["sensitivity_t_pvalue_holm_global74"], recomputed["sensitivity_t_pvalue_holm_global74"], atol=1e-15)
+    assert np.allclose(df["sensitivity_wilcoxon_pvalue_holm_global74"], recomputed["sensitivity_wilcoxon_pvalue_holm_global74"], atol=1e-15)
     assert (df["significant_global74_at_05"] == recomputed["significant_global74_at_05"]).all()
 
 
 def test_documentation_references_exact_source_symbols() -> None:
-    """Steps 3, 6 & 7: Verify docs, phase dossiers, pinned deps, .gitignore, and CI workflow."""
-    known_tests = {name for name in globals() if name.startswith("test_")}
-    doc_paths = [
-        ROOT / "FINAL_AUDIT_REPORT.md",
-        ROOT / "REPRODUCIBILITY.md",
-        ROOT / "README.md",
-        ROOT / "TIMELINE.md",
-        *(ROOT / "docs" / f"PHASE_{i}_{suffix}.md" for i, suffix in (
+    """Verify consolidated 7 phase dossiers, exact source/test symbols, pinned deps, and CI workflow."""
+    expected_phase_docs = [
+        f"PHASE_{i}_{suffix}.md"
+        for i, suffix in (
             (1, "PROBLEM_AND_THEORY"),
             (2, "ARCHITECTURE_AND_ALGORITHMS"),
             (3, "BENCHMARK_AND_BASELINES"),
@@ -456,11 +481,28 @@ def test_documentation_references_exact_source_symbols() -> None:
             (5, "STATISTICAL_ANALYSIS_AND_POWER"),
             (6, "EFFICIENCY_AND_FAIRNESS_AUDIT"),
             (7, "MANUSCRIPT_AND_RELEASE_AUDIT"),
-        )),
+        )
     ]
+    actual_docs = sorted(p.name for p in (ROOT / "docs").glob("*.md"))
+    assert actual_docs == sorted(expected_phase_docs), (
+        f"docs/ must contain strictly the 7 authoritative phase dossiers, got {actual_docs}"
+    )
+
+    doc_paths = [
+        ROOT / "FINAL_AUDIT_REPORT.md",
+        ROOT / "REPRODUCIBILITY.md",
+        ROOT / "README.md",
+        ROOT / "TIMELINE.md",
+        ROOT / "RELEASE_NOTES_v2.0.2.md",
+        *(ROOT / "docs" / name for name in expected_phase_docs),
+    ]
+    known_tests = {name for name in globals() if name.startswith("test_")} | {
+        "test_independent_researcher_attribution_zero_college_mentions",
+        "test_cross_platform_cpu_detection_and_utf8_safety",
+    }
     for doc_path in doc_paths:
         assert doc_path.exists(), f"Missing documentation file {doc_path}"
-        txt = doc_path.read_text()
+        txt = doc_path.read_text(encoding="utf-8")
         assert "21-section" not in txt, f"Stale section count in {doc_path.name}"
         for rel_src in re.findall(r"`(src/[A-Za-z0-9_./]+\.py)`", txt):
             assert (ROOT / rel_src).exists(), f"{doc_path.name} references missing file {rel_src}"
@@ -469,10 +511,86 @@ def test_documentation_references_exact_source_symbols() -> None:
                 assert tname in known_tests, f"{doc_path.name} references missing test {tname}"
 
     assert (ROOT / ".gitignore").exists()
-    assert (ROOT / ".github" / "workflows" / "ci.yml").exists()
+    ci_txt = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "ubuntu-latest" in ci_txt and "windows-latest" in ci_txt
     req_lines = [
-        ln.strip() for ln in (ROOT / "requirements.txt").read_text().splitlines()
+        ln.strip() for ln in (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines()
         if ln.strip() and not ln.strip().startswith("#")
     ]
     assert len(req_lines) >= 6
     assert all("==" in ln for ln in req_lines), "All requirements.txt entries must be version-pinned with =="
+
+
+def test_independent_researcher_attribution_zero_college_mentions() -> None:
+    """Verify standardized independent researcher attribution and zero college/student mentions repo-wide."""
+    forbidden_terms = (
+        "mmmut",
+        "madan mohan",
+        "malaviya",
+        "gorakhpur",
+        "uttar pradesh",
+        "department of computer science",
+        "student / independent",
+        "student researcher",
+    )
+    self_path = Path(__file__).resolve()
+    scan_exts = {".md", ".cff", ".json", ".tex", ".bib", ".py", ".yml"}
+    skip_dirs = {".git", "__pycache__", ".pytest_cache", ".venv"}
+
+    for path in ROOT.rglob("*"):
+        if not path.is_file() or path.resolve() == self_path:
+            continue
+        if any(part in skip_dirs for part in path.parts):
+            continue
+        if path.suffix.lower() not in scan_exts:
+            continue
+        lower_txt = path.read_text(encoding="utf-8").lower()
+        for term in forbidden_terms:
+            assert term not in lower_txt, f"Forbidden affiliation term '{term}' found in {path.relative_to(ROOT)}"
+
+    for required_file in (
+        ROOT / "README.md",
+        ROOT / "CITATION.cff",
+        ROOT / "paper" / "research_paper.tex",
+        ROOT / "src" / "__init__.py",
+    ):
+        content = required_file.read_text(encoding="utf-8")
+        if required_file.name == "CITATION.cff":
+            assert 'family-names: "Parth"' in content and 'given-names: "Dev"' in content
+        else:
+            assert "Dev Parth" in content
+        assert "Independent Researcher" in content
+        assert "Independent Research in Artificial Intelligence" in content
+
+
+def test_cross_platform_cpu_detection_and_utf8_safety(monkeypatch) -> None:
+    """Verify run_complete_suite uses cross-platform CPU detection without lscpu or shell=True."""
+    import importlib.util
+    import platform
+    import sys
+
+    runner_path = ROOT / "experiments" / "run_complete_suite.py"
+    runner_src = runner_path.read_text(encoding="utf-8")
+    assert "lscpu" not in runner_src
+    assert "shell=True" not in runner_src
+
+    spec = importlib.util.spec_from_file_location("_evsa_runner_mod", runner_path)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    # Current platform check
+    cpu_now = mod.detect_cpu_model()
+    assert isinstance(cpu_now, str) and len(cpu_now.strip()) > 0
+
+    # Mocked Windows environment fallback check
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setenv("PROCESSOR_IDENTIFIER", "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel")
+    assert "Intel64" in mod.detect_cpu_model()
+
+    # Mocked generic fallback check
+    monkeypatch.setattr(sys, "platform", "freebsd14")
+    monkeypatch.setattr(platform, "processor", lambda: "")
+    monkeypatch.setattr(platform, "machine", lambda: "amd64")
+    assert mod.detect_cpu_model() == "amd64"
+

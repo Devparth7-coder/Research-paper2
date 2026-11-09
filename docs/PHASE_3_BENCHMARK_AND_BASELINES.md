@@ -1,8 +1,8 @@
-# Phase 3: Synthetic Benchmark (`ShiftBench-Sim v1.0`), Hard Oracle Isolation & Baselines (`v2.0.1`)
+# Phase 3: Synthetic Benchmark (`ShiftBench-Sim v1.0`), Hard Oracle Isolation & Baselines (`v2.0.2`)
 
 **Project**: *Evidence-Validated Strategy Adaptation for Memory-Augmented Agents Under Distribution Shift*  
-**Author**: Dev Parth (Department of Computer Science and Engineering, MMMUT, Gorakhpur, Uttar Pradesh, India)  
-**Release Version**: `v2.0.1` | **Date**: 7 November 2026  
+**Author**: Dev Parth — Independent Researcher (*Independent Research in Artificial Intelligence*)  
+**Release Version**: `v2.0.2` | **Date**: 9 November 2026  
 
 ---
 

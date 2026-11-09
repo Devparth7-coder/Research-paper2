@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Master Reproducible Execution, Recalculation, Sensitivity, and Statistical Pipeline
-for EVSA v2.0.1 (Author: Dev Parth).
+for EVSA v2.0.2 (Author: Dev Parth, Independent Researcher).
 
 Executes:
 1. Experiments 1--6 across N=20 independent random seeds (1001..1020) from scratch.
@@ -9,8 +9,9 @@ Executes:
 3. Experiment 4 denominator & safe-LGG contamination decomposition audit.
 4. Fairness & sensitivity studies (Execution-Channel Parity at N=20; Seed-Horizon
    Stability at N=30).
-5. Full parametric & non-parametric statistical inference with Holm-Bonferroni
-   multiple-testing control, Shapiro-Wilk diagnostics, and non-central-t power.
+5. Full parametric & non-parametric statistical inference with single-pass primary
+   Holm-Bonferroni multiple-testing control (per-family and Global-74) plus separate
+   labelled parametric/non-parametric sensitivity families and non-central-t power.
 6. Programmatic CSV summary export to tables/.
 """
 
@@ -20,6 +21,7 @@ from dataclasses import replace
 import datetime as dt
 import json
 import logging
+import os
 import platform
 import subprocess
 import sys
@@ -68,12 +70,69 @@ from src.evaluation import (
 )
 
 
+def detect_cpu_model(
+    target_platform: Optional[str] = None,
+    cpuinfo_path: Path = Path("/proc/cpuinfo"),
+) -> str:
+    """
+    Cross-platform CPU model detector (Windows, Linux, macOS) with zero UNIX shell pipelines.
+    """
+    plat = (target_platform or sys.platform).lower()
+
+    # 1. Windows: read Windows Registry ProcessorNameString or PROCESSOR_IDENTIFIER
+    if plat.startswith("win"):
+        try:
+            import winreg  # type: ignore[import-not-found]
+            with winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE,
+                r"HARDWARE\DESCRIPTION\System\CentralProcessor\0",
+            ) as key:
+                val, _ = winreg.QueryValueEx(key, "ProcessorNameString")
+                if isinstance(val, str) and val.strip():
+                    return val.strip()
+        except Exception:
+            pass
+        env_cpu = os.environ.get("PROCESSOR_IDENTIFIER", "").strip()
+        if env_cpu:
+            return env_cpu
+
+    # 2. Linux: parse /proc/cpuinfo directly in pure Python
+    if plat.startswith("linux") and cpuinfo_path.exists():
+        try:
+            for line in cpuinfo_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+                if ":" in line and line.split(":", 1)[0].strip().lower() in {"model name", "hardware", "cpu"}:
+                    val = line.split(":", 1)[1].strip()
+                    if val:
+                        return val
+        except Exception:
+            pass
+
+    # 3. macOS: query sysctl directly via argument list
+    if plat == "darwin":
+        try:
+            res = subprocess.run(
+                ["sysctl", "-n", "machdep.cpu.brand_string"],
+                capture_output=True,
+                text=True,
+                timeout=3,
+                check=False,
+            )
+            if res.returncode == 0 and res.stdout.strip():
+                return res.stdout.strip()
+        except Exception:
+            pass
+
+    return (platform.processor() or platform.machine() or "Unknown CPU").strip()
+
+
 def write_experiment_configs() -> None:
     """Write explicit JSON configuration files to config/ and experiments/configs/."""
     global_cfg = {
         "project": "Evidence-Validated Strategy Adaptation for Memory-Augmented Agents Under Distribution Shift",
         "author": "Dev Parth",
-        "affiliation": "Department of Computer Science and Engineering, Madan Mohan Malaviya University of Technology, Gorakhpur, Uttar Pradesh, India",
+        "role": "Independent Researcher",
+        "affiliation": "Independent Research in Artificial Intelligence",
+        "release_date": "2026-11-09",
         "version": evsa_pkg.__version__,
         "benchmark": {
             "name": "ShiftBench-Sim v1.0",
@@ -126,7 +185,7 @@ def write_experiment_configs() -> None:
             "max_active_per_domain": 48,
         },
     }
-    (ROOT / "config" / "default_config.json").write_text(json.dumps(global_cfg, indent=2))
+    (ROOT / "config" / "default_config.json").write_text(json.dumps(global_cfg, indent=2), encoding="utf-8")
 
     exp_cfgs = {
         "exp1_config.json": {
@@ -183,7 +242,7 @@ def write_experiment_configs() -> None:
         },
     }
     for fname, payload in exp_cfgs.items():
-        (ROOT / "experiments" / "configs" / fname).write_text(json.dumps(payload, indent=2))
+        (ROOT / "experiments" / "configs" / fname).write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
 def build_core_agents(seed: int) -> List[BaseExperimentalAgent]:
@@ -823,9 +882,10 @@ def export_markdown_summary_tables(tbl_dir: Path) -> None:
             "agent", "overall_sr_mean", "unseen_instance_sr_mean", "unseen_compositional_sr_mean",
         ], None),
         ("table_statistical_tests_all.csv", [
-            "proposed", "comparator", "proposed_mean", "comparator_mean",
-            "cohens_dz", "family", "metric", "t_pvalue_holm",
-            "t_pvalue_holm_global74", "significant_at_05", "significant_global74_at_05",
+            "proposed", "comparator", "cohens_dz", "family", "metric",
+            "primary_test", "primary_pvalue_raw", "primary_pvalue_holm",
+            "primary_pvalue_holm_global74", "sensitivity_t_pvalue_holm_global74",
+            "significant_at_05", "significant_global74_at_05",
         ], None),
     ]
     md_parts = [f"# EVSA v{evsa_pkg.__version__} Verified Publication Tables (Recalculated from Raw Seed Data)\n"]
@@ -847,7 +907,7 @@ def export_markdown_summary_tables(tbl_dir: Path) -> None:
                     vals.append(str(v))
             rows_txt.append("| " + " | ".join(vals) + " |")
         md_parts.append("\n".join(rows_txt) + "\n")
-    (tbl_dir / "summary_tables.md").write_text("\n".join(md_parts))
+    (tbl_dir / "summary_tables.md").write_text("\n".join(md_parts), encoding="utf-8")
 
 
 def main() -> None:
@@ -857,7 +917,7 @@ def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[logging.FileHandler(log_path, mode="w"), logging.StreamHandler(sys.stdout)],
+        handlers=[logging.FileHandler(log_path, mode="w", encoding="utf-8"), logging.StreamHandler(sys.stdout)],
     )
     logger = logging.getLogger("evsa_audit")
 
@@ -1067,13 +1127,14 @@ def main() -> None:
     export_markdown_summary_tables(tbl_dir)
 
     elapsed = time.perf_counter() - t0
-    cpu_model = subprocess.check_output("lscpu | grep 'Model name' | cut -d: -f2", shell=True, text=True).strip()
+    cpu_model = detect_cpu_model()
     digest = {
         "manifest": {
             "version": evsa_pkg.__version__,
             "author": "Dev Parth",
-            "affiliation": "Department of Computer Science and Engineering, Madan Mohan Malaviya University of Technology, Gorakhpur, Uttar Pradesh, India",
-            "completion_date": "2026-11-07",
+            "role": "Independent Researcher",
+            "affiliation": "Independent Research in Artificial Intelligence",
+            "release_date": "2026-11-09",
             "execution_timestamp_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
             "python_version": platform.python_version(),
             "platform": platform.platform(),
@@ -1094,19 +1155,21 @@ def main() -> None:
         "fairness_parity": s_fair.to_dict(orient="records"),
         "num_hypothesis_tests": len(df_tests),
         "num_significant_per_family_05": int(df_tests["significant_at_05"].sum()),
-        "num_significant_t_holm_05": int(df_tests["t_significant_holm"].sum()),
-        "num_significant_t_global74_05": int(df_tests["t_significant_holm_global74"].sum()),
         "num_significant_primary_global74_05": int(df_tests["significant_global74_at_05"].sum()),
+        "num_significant_sensitivity_t_holm_05": int(df_tests["sensitivity_t_significant_holm"].sum()),
+        "num_significant_sensitivity_t_global74_05": int(df_tests["sensitivity_t_significant_holm_global74"].sum()),
+        "num_significant_sensitivity_wilcoxon_global74_05": int(df_tests["sensitivity_wilcoxon_significant_holm_global74"].sum()),
     }
-    (stat_dir / "statistical_digest.json").write_text(json.dumps(digest, indent=2))
-    (exp_dir / "experiment_manifest.json").write_text(json.dumps(digest["manifest"], indent=2))
+    (stat_dir / "statistical_digest.json").write_text(json.dumps(digest, indent=2), encoding="utf-8")
+    (exp_dir / "experiment_manifest.json").write_text(json.dumps(digest["manifest"], indent=2), encoding="utf-8")
     logger.info(
-        "Complete EVSA v%s suite finished in %.2f seconds (%d tests; %d per-family sig, %d global-74 t-sig).",
+        "Complete EVSA v%s suite finished in %.2f seconds (%d tests; %d per-family primary sig, %d global-74 primary sig, %d global-74 sensitivity-t sig).",
         evsa_pkg.__version__,
         elapsed,
         len(df_tests),
         int(df_tests["significant_at_05"].sum()),
-        int(df_tests["t_significant_holm_global74"].sum()),
+        int(df_tests["significant_global74_at_05"].sum()),
+        int(df_tests["sensitivity_t_significant_holm_global74"].sum()),
     )
 
 

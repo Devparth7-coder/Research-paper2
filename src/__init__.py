@@ -1,4 +1,10 @@
-"""EVSA modular research framework (v2.0.1 — Hard-Oracle-Isolated & Globally-Calibrated Release)."""
+"""
+Evidence-Validated Strategy Adaptation (EVSA) — Research Package (v2.0.2).
 
-__version__ = "2.0.1"
+Author: Dev Parth
+Role: Independent Researcher
+Affiliation: Independent Research in Artificial Intelligence
+"""
+
+__version__ = "2.0.2"
 __author__ = "Dev Parth"

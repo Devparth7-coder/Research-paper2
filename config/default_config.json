@@ -1,8 +1,10 @@
 {
   "project": "Evidence-Validated Strategy Adaptation for Memory-Augmented Agents Under Distribution Shift",
   "author": "Dev Parth",
-  "affiliation": "Department of Computer Science and Engineering, Madan Mohan Malaviya University of Technology, Gorakhpur, Uttar Pradesh, India",
-  "version": "2.0.1",
+  "role": "Independent Researcher",
+  "affiliation": "Independent Research in Artificial Intelligence",
+  "release_date": "2026-11-09",
+  "version": "2.0.2",
   "benchmark": {
     "name": "ShiftBench-Sim v1.0",
     "domains": [

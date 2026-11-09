@@ -131,7 +131,7 @@ def add_figure(doc: Document, stem: str, caption: str, width_in: float = 6.3) ->
 
 
 def main() -> None:
-    with open(DIGEST_PATH) as f:
+    with open(DIGEST_PATH, encoding="utf-8") as f:
         digest = json.load(f)
 
     doc = Document()
@@ -162,15 +162,14 @@ def main() -> None:
     r_auth.bold = True
     r_auth.font.size = Pt(12)
     r_aff = ap.add_run(
-        "Student / Independent Researcher\n"
-        "Department of Computer Science and Engineering\n"
-        "Madan Mohan Malaviya University of Technology (MMMUT), Gorakhpur, Uttar Pradesh, India\n"
-        "Completed: 7 November 2026"
+        "Independent Researcher\n"
+        "Independent Research in Artificial Intelligence\n"
+        "Release Date: 9 November 2026"
     )
     r_aff.font.size = Pt(10)
 
     # Parse sections and prose from research_paper.tex for strict prose parity
-    tex_src = (PAPER_DIR / "research_paper.tex").read_text()
+    tex_src = (PAPER_DIR / "research_paper.tex").read_text(encoding="utf-8")
 
     # 2. Abstract & 3. Keywords
     abs_match = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", tex_src, re.S)
@@ -334,17 +333,18 @@ def main() -> None:
             sub_t = df_t.iloc[pick_idx]
             add_styled_table(
                 doc,
-                "Table 7: Selected paired statistical tests (N = 20 seeds) with per-family and global-74 Holm-Bonferroni p-values.",
-                ["Family", "Comparator", "Mean Diff", "Cohen's dz", "Per-Fam t_Holm", "Wilcoxon W_Holm", "Global-74 t_Holm", "Decision (Fam / Glob74)"],
+                "Table 7: Selected paired statistical tests (N = 20 seeds) with direct per-family primary Holm, direct Global-74 primary Holm, and labelled pure-test Global-74 sensitivity p-values.",
+                ["Family", "Comparator", "Primary Test", "Cohen's dz", "Per-Fam p_Holm", "Glob-74 p_Holm", "Sens. t_Glob74", "Sens. W_Glob74", "Decision (Fam / Glob74)"],
                 [
                     [
                         str(r["family"]),
                         str(r["comparator"]),
-                        f"{r['mean_diff']:+.4f}",
+                        str(r["primary_test"]),
                         f"{r['cohens_dz']:+.2f}",
-                        f"{r['t_pvalue_holm']:.3e}",
-                        f"{r['wilcoxon_pvalue_holm']:.3e}",
-                        f"{r['t_pvalue_holm_global74']:.3e}",
+                        f"{r['primary_pvalue_holm']:.3e}",
+                        f"{r['primary_pvalue_holm_global74']:.3e}",
+                        f"{r['sensitivity_t_pvalue_holm_global74']:.3e}",
+                        f"{r['sensitivity_wilcoxon_pvalue_holm_global74']:.3e}",
                         ("Sig. / Sig." if r["significant_global74_at_05"] else "Sig. / Non-Sig.")
                         if r["significant_at_05"]
                         else "Non-Sig. / Non-Sig.",
@@ -386,7 +386,7 @@ def main() -> None:
 
     # 20. References (parsed directly from verified references.bib)
     doc.add_heading("References", level=1)
-    bib_raw = (PAPER_DIR / "references.bib").read_text()
+    bib_raw = (PAPER_DIR / "references.bib").read_text(encoding="utf-8")
     entries = re.findall(r"@\w+\{([^,]+),(.*?)\n\}", bib_raw, flags=re.S)
     for idx, (key, fields_txt) in enumerate(entries, start=1):
         fdict = {m.group(1).lower(): clean_latex_text(m.group(2))

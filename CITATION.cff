@@ -4,9 +4,9 @@ title: "Evidence-Validated Strategy Adaptation for Memory-Augmented Agents Under
 authors:
   - family-names: "Parth"
     given-names: "Dev"
-    affiliation: "Department of Computer Science and Engineering, Madan Mohan Malaviya University of Technology, Gorakhpur, Uttar Pradesh, India"
-date-released: 2026-11-07
-version: "2.0.1"
+    affiliation: "Independent Researcher — Independent Research in Artificial Intelligence"
+date-released: 2026-11-09
+version: "2.0.2"
 license: "MIT"
 repository-code: "https://github.com/Devparth7-coder/EVSA-Research-Paper"
 abstract: >-
@@ -14,8 +14,9 @@ abstract: >-
   reliable experience validation, applicability-gated retrieval with Safe LGG,
   and per-domain residual CUSUM drift invalidation in memory-augmented agents,
   evaluated in the synthetic symbolic-procedural ShiftBench-Sim v1.0 environment
-  with hard capability-isolated oracle separation and reproducible per-family
-  and global-74 Holm-Bonferroni statistical ledgers (v2.0.1).
+  with hard capability-isolated oracle separation, cross-platform reproducibility,
+  and direct single-pass per-family and Global-74 Holm-Bonferroni statistical
+  ledgers (v2.0.2).
 keywords:
   - "memory-augmented agents"
   - "sequential hypothesis testing"

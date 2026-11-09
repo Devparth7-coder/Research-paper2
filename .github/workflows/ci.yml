@@ -1,4 +1,4 @@
-name: EVSA Scientific Integrity & Reproducibility CI
+name: EVSA Scientific Integrity & Cross-Platform Reproducibility CI
 
 on:
   push:
@@ -16,12 +16,20 @@ permissions:
 
 jobs:
   unit-and-audit-tests:
-    name: Unit, Hard-Oracle-Boundary & Ledger Suite (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    name: Suite (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.11"
+          - os: ubuntu-latest
+            python-version: "3.12"
+          - os: ubuntu-latest
+            python-version: "3.13"
+          - os: windows-latest
+            python-version: "3.13"
 
     steps:
       - name: Checkout repository
@@ -38,22 +46,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run 14-test unit, hard-interface-boundary & global-74 ledger suite
+      - name: Run 16-test unit, attribution, cross-platform, boundary & Global-74 ledger suite
         run: pytest -v tests/test_evsa_suite.py
 
-      - name: Verify deterministic seed-1001 episode parity & DOCX manuscript build
+      - name: Verify deterministic seed-1001 episode parity, CPU info & DOCX build
         if: matrix.python-version == '3.13'
         run: |
-          python -c "
-          from src.benchmark import NonStationaryTaskEnvironment
-          from src.agents import EVSAAgent
-          from src.evaluation import run_audited_episode
-          env1, env2 = NonStationaryTaskEnvironment(seed=1001), NonStationaryTaskEnvironment(seed=1001)
-          s1, s2 = env1.sample_task_stream(25, stream_seed=1001), env2.sample_task_stream(25, stream_seed=1001)
-          a1, a2 = EVSAAgent(seed=1001), EVSAAgent(seed=1001)
-          r1 = [run_audited_episode(a1, t, env1, 'ci', max_trials=2, learn=True).true_success for t in s1]
-          r2 = [run_audited_episode(a2, t, env2, 'ci', max_trials=2, learn=True).true_success for t in s2]
-          assert r1 == r2, 'Seed-1001 determinism check failed'
-          "
+          python -c "from src.benchmark import NonStationaryTaskEnvironment; from src.agents import EVSAAgent; from src.evaluation import run_audited_episode; from experiments.run_complete_suite import detect_cpu_model; assert detect_cpu_model(); env1, env2 = NonStationaryTaskEnvironment(seed=1001), NonStationaryTaskEnvironment(seed=1001); s1, s2 = env1.sample_task_stream(25, stream_seed=1001), env2.sample_task_stream(25, stream_seed=1001); a1, a2 = EVSAAgent(seed=1001), EVSAAgent(seed=1001); r1 = [run_audited_episode(a1, t, env1, 'ci', max_trials=2, learn=True).true_success for t in s1]; r2 = [run_audited_episode(a2, t, env2, 'ci', max_trials=2, learn=True).true_success for t in s2]; assert r1 == r2, 'Seed-1001 determinism check failed'"
           python experiments/generate_all_figures.py
           python paper/build_docx.py

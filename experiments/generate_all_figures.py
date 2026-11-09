@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate all 10 required publication-grade figures (300-DPI .png and vector .pdf)
-in figures/ directly from verified v2.0.1 datasets in experiments/.
+in figures/ directly from verified v2.0.2 datasets in experiments/.
 """
 
 from __future__ import annotations
