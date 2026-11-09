@@ -1,9 +1,9 @@
 {
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": "Dev Parth",
   "affiliation": "Department of Computer Science and Engineering, Madan Mohan Malaviya University of Technology, Gorakhpur, Uttar Pradesh, India",
   "completion_date": "2026-11-07",
-  "execution_timestamp_utc": "2026-11-07T16:24:04.045191+00:00",
+  "execution_timestamp_utc": "2026-11-09T14:27:58.361739+00:00",
   "python_version": "3.13.16",
   "platform": "Linux-6.1.189+-x86_64-with-glibc2.41",
   "cpu_model": "Intel(R) Xeon(R) Processor @ 2.60GHz",
@@ -11,5 +11,5 @@
   "num_stability_seeds": 30,
   "mdes_dz_80pct_power_n20": 0.6604,
   "mdes_dz_90pct_power_n20": 0.7645,
-  "total_suite_runtime_sec": 159.19
+  "total_suite_runtime_sec": 242.26
 }

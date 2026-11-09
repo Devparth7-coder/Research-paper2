@@ -1,18 +1,81 @@
 """
-Post-Hoc Evaluation & Contamination Audit Helpers (`src/evaluation/audit.py`).
+Evaluator-Only Episode Harness & Post-Hoc Contamination Audit (`src/evaluation/audit.py`).
 
 Located strictly in the external `evaluation` package so no agent, memory,
-retrieval, validation, or drift-detection module ever imports or accesses
-ground-truth workflow tables.
+retrieval, validation, or drift-detection module ever imports `NonStationaryTaskEnvironment`
+or `EpisodeTelemetry` or accesses ground-truth workflow tables.
 """
 
 from __future__ import annotations
 
-from typing import Dict, Sequence, Tuple
+from typing import Callable, Dict, Optional, Sequence, Tuple
 
+from ..agents.baselines import (
+    BaseExperimentalAgent,
+    ConventionalMemoryAgent,
+    ExperienceReplayAgent,
+    ReflectionAgent,
+)
+from ..agents.evsa_agent import EVSAAgent
 from ..benchmark.environment import NonStationaryTaskEnvironment
-from ..benchmark.types import StrategyStatus
+from ..benchmark.types import EpisodeTelemetry, RolloutResult, StrategyStatus, TaskInstance
 from ..memory.repository import StrategyRepository
+
+
+def run_audited_episode(
+    agent: BaseExperimentalAgent,
+    task: TaskInstance,
+    oracle_env: NonStationaryTaskEnvironment,
+    experiment_name: str,
+    max_trials: int = 2,
+    learn: bool = True,
+    corruption_override: Optional[float] = None,
+    rollout_observer: Optional[Callable[[TaskInstance, Tuple[int, ...], RolloutResult], None]] = None,
+) -> EpisodeTelemetry:
+    """
+    Execute one task episode across the hard capability boundary:
+    1. Construct a capability-isolated `AgentEnvironmentInterface` handle from `oracle_env`.
+    2. Invoke `agent.act_on_episode(...)` (which receives ONLY observable `RolloutResult`s
+       and returns strictly non-oracle `AgentEpisodeOutcome`).
+    3. Join agent-side resource telemetry with evaluator-only ground-truth audit logs.
+    """
+    agent_iface = oracle_env.make_agent_interface(
+        corruption_override=corruption_override,
+        rollout_observer=rollout_observer,
+    )
+    outcome = agent.act_on_episode(task, agent_iface, max_trials=max_trials, learn=learn)
+
+    val_strategies = None
+    mem_entries = None
+    include_ref_avoid = False
+    if isinstance(agent, EVSAAgent):
+        val_strategies = agent.repo.validated_strategies()
+    elif isinstance(agent, ConventionalMemoryAgent):
+        mem_entries = agent.memory
+    elif isinstance(agent, ReflectionAgent):
+        mem_entries = agent._all_entries()
+        include_ref_avoid = True
+    elif isinstance(agent, ExperienceReplayAgent):
+        mem_entries = agent.replay_buffer
+
+    return oracle_env.finalize_episode_telemetry(
+        experiment_name=experiment_name,
+        agent_name=agent.name,
+        seed=agent.seed,
+        task=task,
+        best_trial_idx=outcome.best_trial_idx,
+        trials_used=outcome.trials_used,
+        strategy_evaluations=outcome.strategy_evaluations,
+        execution_time_ms=outcome.execution_time_ms,
+        active_memory_items=outcome.active_memory_items,
+        memory_bytes=outcome.memory_bytes,
+        prompt_tokens=outcome.prompt_tokens,
+        completion_tokens=outcome.completion_tokens,
+        shift_detected=outcome.shift_detected,
+        validated_strategies=val_strategies,
+        memory_entries=mem_entries,
+        include_reflection_avoid=include_ref_avoid,
+    )
 
 
 def is_record_optimal_at_creation(

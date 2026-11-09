@@ -17,8 +17,8 @@ import time
 from typing import Dict, List, Optional
 import numpy as np
 
-from ..benchmark.environment import NonStationaryTaskEnvironment
-from ..benchmark.types import EpisodeTelemetry, RolloutResult, StrategyStatus, TaskInstance
+from ..benchmark.agent_interface import AgentEnvironmentInterface
+from ..benchmark.types import AgentEpisodeOutcome, RolloutResult, StrategyStatus, TaskInstance
 from ..drift_detection.cusum_detector import DistributionShiftDetector
 from ..memory.hypothesis_generator import HypothesisGenerator
 from ..memory.memory_manager import AdaptiveMemoryManager
@@ -26,7 +26,7 @@ from ..memory.repository import StrategyRepository
 from ..retrieval.retriever import StrategyRetriever
 from ..validation.confidence import ConfidenceEstimator
 from ..validation.sprt_validator import EvidenceValidationEngine
-from .baselines import BaseExperimentalAgent
+from .baselines import BaseExperimentalAgent, _require_agent_interface
 from .experimentation import ExperimentationEngine
 
 
@@ -87,14 +87,14 @@ class EVSAAgent(BaseExperimentalAgent):
         )
         self.exp_engine = ExperimentationEngine()
 
-    def run_episode(
+    def act_on_episode(
         self,
         task: TaskInstance,
-        env: NonStationaryTaskEnvironment,
-        experiment_name: str,
+        env: AgentEnvironmentInterface,
         max_trials: int = 2,
         learn: bool = True,
-    ) -> EpisodeTelemetry:
+    ) -> AgentEpisodeOutcome:
+        _require_agent_interface(env)
         t0 = time.perf_counter()
         p_tok_ep, c_tok_ep = 0, 0
         total_evals = 0
@@ -244,11 +244,7 @@ class EVSAAgent(BaseExperimentalAgent):
 
         dt_ms = (time.perf_counter() - t0) * 1000.0
         assert best_res is not None
-        return env.finalize_episode_telemetry(
-            experiment_name=experiment_name,
-            agent_name=self.name,
-            seed=self.seed,
-            task=task,
+        return AgentEpisodeOutcome(
             best_trial_idx=best_trial_idx,
             trials_used=trials_used,
             strategy_evaluations=total_evals,
@@ -258,7 +254,6 @@ class EVSAAgent(BaseExperimentalAgent):
             prompt_tokens=p_tok_ep,
             completion_tokens=c_tok_ep,
             shift_detected=shift_fired_ep,
-            validated_strategies=self.repo.validated_strategies(),
         )
 
     def active_memory_count(self) -> int:

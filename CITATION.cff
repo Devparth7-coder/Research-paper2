@@ -6,13 +6,16 @@ authors:
     given-names: "Dev"
     affiliation: "Department of Computer Science and Engineering, Madan Mohan Malaviya University of Technology, Gorakhpur, Uttar Pradesh, India"
 date-released: 2026-11-07
-version: "2.0.0"
+version: "2.0.1"
 license: "MIT"
+repository-code: "https://github.com/Devparth7-coder/EVSA-Research-Paper"
 abstract: >-
   Evidence-Validated Strategy Adaptation (EVSA) is a statistical framework for
   reliable experience validation, applicability-gated retrieval with Safe LGG,
-  and per-domain residual CUSUM drift invalidation in memory-augmented agents
-  evaluated on ShiftBench-Sim v1.0 (zero-oracle-leakage verification, v2.0.0).
+  and per-domain residual CUSUM drift invalidation in memory-augmented agents,
+  evaluated in the synthetic symbolic-procedural ShiftBench-Sim v1.0 environment
+  with hard capability-isolated oracle separation and reproducible per-family
+  and global-74 Holm-Bonferroni statistical ledgers (v2.0.1).
 keywords:
   - "memory-augmented agents"
   - "sequential hypothesis testing"

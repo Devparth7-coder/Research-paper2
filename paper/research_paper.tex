@@ -14,6 +14,7 @@
 \usepackage{fancyhdr}
 \usepackage{microtype}
 \usepackage[numbers,sort&compress]{natbib}
+\PassOptionsToPackage{hyphens}{url}
 \usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=teal!70!black,urlcolor=blue!65!black]{hyperref}
 
 \definecolor{evsaTeal}{HTML}{0F766E}
@@ -30,7 +31,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\footnotesize\textcolor{mutedGray}{D. Parth — Evidence-Validated Strategy Adaptation (EVSA)}}
-\fancyhead[R]{\footnotesize\textcolor{mutedGray}{Research Manuscript v2.0.0 (7 November 2026)}}
+\fancyhead[R]{\footnotesize\textcolor{mutedGray}{Research Manuscript v2.0.1 (7 November 2026)}}
 \fancyfoot[C]{\footnotesize\thepage}
 \renewcommand{\headrulewidth}{0.35pt}
 
@@ -51,25 +52,25 @@
 \thispagestyle{fancy}
 
 % ---------------------------------------------------------------------------
-% 2. ABSTRACT & 3. KEYWORDS
+% ABSTRACT & KEYWORDS
 % ---------------------------------------------------------------------------
 \begin{abstract}
 \noindent Memory-augmented autonomous agents store past trajectories, verbal reflections, or induced workflows to improve sequential decision-making without parameter updates. However, most non-parametric agent memory architectures rely on single-episode admission and surface-similarity retrieval without statistical verification, explicit applicability preconditions, or distribution-shift invalidation. Under non-stationary task streams and noisy evaluator feedback, unvalidated experiential stores accumulate spurious coincidences and obsolete routines, causing severe negative transfer. We present \textbf{Evidence-Validated Strategy Adaptation (EVSA)}, a closed-loop statistical framework that models reusable agent strategies as explicit hypotheses governed by three epistemic tiers (\texttt{CANDIDATE}, \texttt{VALIDATED}, and \texttt{QUARANTINED}). EVSA combines (i) a discounted log-odds sequential validation heuristic motivated by Wald's Sequential Probability Ratio Test (SPRT) with discounted Bayesian $\mathrm{Beta}(\alpha,\beta)$ lower credible bounds, (ii) multiplicative applicability-gated retrieval with re-verified Least General Generalization (Safe LGG) over task preconditions, and (iii) per-domain residual tabular CUSUM monitoring for evidence-based selective post-shift quarantine.
 
-We evaluate EVSA on \textbf{ShiftBench-Sim v1.0}, a deterministic, zero-oracle-leakage symbolic-procedural multi-domain benchmark ($>360{,}000$ simulated episodes across $N=20$ primary seeds and $N=30$ stability seeds) against four budget-matched baselines (\emph{Static}, \emph{Conventional Memory}, \emph{Reflection}, and \emph{Experience Replay}). On held-out unseen tasks—where frozen evaluation executes strictly \texttt{VALIDATED} strategies—EVSA achieves \textbf{54.50\% $\pm$ 5.04\%} success ($55.17\% \pm 5.62\%$ across $N=30$ seeds), outperforming all baselines ($25.65\%\text{--}29.62\%$, paired Cohen's $d_z \in [4.31, 6.35]$, Holm-Bonferroni $p \le 8.15 \times 10^{-14}$), including zero-shot compositional tasks ($31.13\%$ vs.\ $12.12\%\text{--}17.94\%$, $p_{\mathrm{Holm}} \le 1.07 \times 10^{-6}$). A controlled execution-channel parity study confirms that $+22.04$ percentage points ($\sim 82\%$) of EVSA's $+26.92\text{ pp}$ advantage over Experience Replay persists under identical stochastic prompt execution ($49.62\%$ vs.\ $27.58\%$, $p_{\mathrm{Holm}} = 1.57 \times 10^{-13}$). Across 320-episode continual streams, EVSA reaches \textbf{65.21\% $\pm$ 8.52\%} while compacting memory to $21.50$ validated strategies ($13.14\text{ KB}$). Following abrupt multi-domain concept shifts, EVSA achieves \textbf{$+20.80$ pp} post-shock adaptation gain while preserving \textbf{82.21\%} accuracy on unshifted control domains. Under symmetric feedback corruption ($\eta \in \{0.10, 0.25, 0.35\}$), EVSA limits rollout-level false acceptance to \textbf{1.34\%--2.53\%} (candidate-level false promotion $8.08\%\text{--}11.32\%$), significantly reduces active memory contamination across all noise levels ($p_{\mathrm{Holm}} \le 0.0063$), and recovers to \textbf{74.90\%--84.10\%} once clean feedback resumes, while candidly exposing sample-complexity versus epistemic-purity trade-offs under high noise ($65.44\%$ FRR at $\eta=0.35$) and short per-archetype horizons.
+We evaluate EVSA in \textbf{ShiftBench-Sim v1.0}, a controlled, low-dimensional synthetic symbolic-procedural simulation ($4$-step discrete operator workflows, observable $5$-bit binary state descriptors, $20$-dimensional synthetic embeddings, and a heuristic non-LLM \texttt{CalibratedSymbolicLLMBackbone} isolated behind a capability-restricted \texttt{AgentEnvironmentInterface}; $>360{,}000$ simulated episodes across $N=20$ primary seeds and $N=30$ stability seeds) against four budget-matched baselines (\emph{Static}, \emph{Conventional Memory}, \emph{Reflection}, and \emph{Experience Replay}). On held-out unseen tasks—where frozen evaluation executes strictly \texttt{VALIDATED} strategies—EVSA achieves \textbf{54.50\% $\pm$ 5.04\%} success ($55.17\% \pm 5.62\%$ across $N=30$ seeds), outperforming all baselines ($25.65\%\text{--}29.62\%$, paired Cohen's $d_z \in [4.31, 6.35]$, Holm-Bonferroni $p \le 8.15 \times 10^{-14}$), including zero-shot compositional tasks ($31.13\%$ vs.\ $12.12\%\text{--}17.94\%$, $p_{\mathrm{Holm}} \le 1.07 \times 10^{-6}$). A controlled execution-channel parity study confirms that $+22.04$ percentage points ($\sim 82\%$) of EVSA's $+26.92\text{ pp}$ advantage over Experience Replay persists under identical stochastic prompt execution ($49.62\%$ vs.\ $27.58\%$, $p_{\mathrm{Holm}} = 1.57 \times 10^{-13}$). Across 320-episode continual streams, EVSA reaches \textbf{65.21\% $\pm$ 8.52\%} while compacting memory to $21.50$ validated strategies ($13.14\text{ KB}$). Following abrupt multi-domain concept shifts, EVSA achieves \textbf{$+20.80$ pp} post-shock adaptation gain while preserving \textbf{82.21\%} accuracy with no measurable cross-domain degradation on unshifted control domains. Under symmetric feedback corruption ($\eta \in \{0.10, 0.25, 0.35\}$), EVSA limits rollout-level false acceptance to \textbf{1.34\%--2.53\%} (candidate-level false promotion $8.08\%\text{--}11.32\%$), significantly reduces active memory contamination across all noise levels under pre-defined per-family Holm adjustment ($p_{\mathrm{Holm}} \le 0.0063$; $60/74$ study-wide tests significant under simultaneous global 74-test pooling), and recovers to \textbf{74.90\%--84.10\%} once clean feedback resumes, while candidly exposing sample-complexity versus epistemic-purity trade-offs under high noise ($65.44\%$ FRR at $\eta=0.35$) and short per-archetype horizons.
 \end{abstract}
 
 \noindent\textbf{Keywords:} Memory-augmented agents; Sequential hypothesis testing; Bayesian credible bounds; Applicability-gated retrieval; Concept drift detection; Selective memory invalidation; Continual adaptation.
 
 % ---------------------------------------------------------------------------
-% 4. INTRODUCTION
+% SECTION 1: INTRODUCTION
 % ---------------------------------------------------------------------------
 \section{Introduction}
 Autonomous reasoning agents increasingly augment fixed decision backbones with external episodic or procedural memory repositories to accumulate operational competence at test time \cite{yao2023react,shinn2023reflexion,wang2024voyager,zhao2024expel,wang2025awm}. Rather than updating model weights via gradient descent—which is often computationally prohibitive, API-restricted, or prone to catastrophic forgetting \cite{kirkpatrick2017overcoming}—non-parametric memory agents record past interaction traces, self-critiques, or extracted action workflows and retrieve them via vector similarity when tackling related tasks \cite{park2023generative,liu2025cer,ouyang2026reasoningbank}.
 
 Despite strong gains in stationary, clean-feedback environments, prevailing agentic memory designs rest on three fragile implicit assumptions:
 \begin{enumerate}
-  \item \textbf{Single-Episode Epistemic Trust:} If an action trajectory or verbal reflection coincides with task completion once, it is immediately admitted as reusable knowledge without testing whether the outcome arose from genuine causal alignment, a lucky stochastic transition, or a noisy evaluator signal \cite{xiong2024can,xiong2026memory}.
+  \item \textbf{Single-Episode Epistemic Trust:} If an action trajectory or verbal reflection coincides with task completion once, it is immediately admitted as reusable knowledge without testing whether the outcome arose from genuine task-operator alignment, a lucky stochastic transition, or a noisy evaluator signal \cite{xiong2024can,xiong2026memory}.
   \item \textbf{Semantic-Applicability Equivalence:} High cosine similarity between surface task descriptions is treated as sufficient evidence that two tasks share identical operational constraints, ignoring latent structural preconditions that invert optimal tool sequences \cite{chen2024agentpoison,zou2025poisonedrag}.
   \item \textbf{Temporal Stationarity:} Stored experiences remain active indefinitely (or decay only by passive recency heuristics), lacking online statistical change-point detection to quarantine invalidated strategies when external APIs, policies, or environment dynamics shift \cite{gama2014survey}.
 \end{enumerate}
@@ -78,18 +79,18 @@ When these assumptions fail simultaneously, memory transitions from an asset int
 
 To address these coupled failure modes in a principled, auditable setting, this paper introduces \textbf{Evidence-Validated Strategy Adaptation (EVSA)}. EVSA treats every induced workflow strategy $h = (\phi_h, \pi_h)$ not as a raw text trace, but as a falsifiable statistical hypothesis pairing an explicit conjunctive precondition $\phi_h$ with an executable action plan $\pi_h$. Strategies enter a probationary \texttt{CANDIDATE} tier, undergo multi-trial verification governed by a discounted log-odds sequential heuristic and Bayesian $\mathrm{Beta}(\alpha,\beta)$ lower credible bounds, generalize conservatively across nuisance features via re-verified Least General Generalization (Safe LGG) \cite{plotkin1970inductive}, and remain continuously audited in the \texttt{VALIDATED} tier by per-domain residual tabular CUSUM drift detectors \cite{page1954continuous}.
 
-Because isolating memory-validation dynamics from live API non-determinism and pretraining contamination requires exact ground-truth control over latent preconditions, changepoints, and feedback corruption, we conduct our empirical investigation on \textbf{ShiftBench-Sim v1.0}, a deterministic symbolic-procedural benchmark. We explicitly avoid claiming evaluation on live frontier Large Language Models (LLMs); instead, ShiftBench-Sim v1.0 provides a zero-oracle-leakage algorithmic testbed where every statistical mechanism, failure boundary, and baseline asymmetry can be audited rigorously.
+Because isolating memory-validation dynamics from live API non-determinism and pretraining contamination requires exact ground-truth control over latent preconditions, changepoints, and feedback corruption, we conduct our empirical investigation in \textbf{ShiftBench-Sim v1.0}, a controlled, low-dimensional synthetic symbolic-procedural simulation ($4$-step discrete operator tuples, observable $5$-bit binary state vectors, $20$-dimensional synthetic embeddings, and a heuristic \texttt{CalibratedSymbolicLLMBackbone}). We explicitly avoid claiming evaluation on live neural Large Language Models (LLMs) or unstructured natural-language precondition extraction; instead, ShiftBench-Sim v1.0 provides a capability-isolated algorithmic testbed where every statistical mechanism, failure boundary, and baseline asymmetry can be audited rigorously.
 
 \paragraph{Summary of Verified Contributions.}
 \begin{itemize}
   \item \textbf{Closed-Loop Epistemic Strategy Architecture:} We formalize EVSA across ten modular components uniting sequential hypothesis gating, Bayesian lower credible reliability estimation, precondition-gated retrieval with Safe LGG re-verification, and domain-scoped residual CUSUM invalidation.
-  \item \textbf{Mathematically Audited Sequential \& Drift Formulations:} We clearly distinguish Bayesian Beta credible bounds from frequentist confidence intervals, characterize discounted/adaptively selected SPRT stopping honestly as an empirically calibrated sequential heuristic rather than claiming classical i.i.d.\ Wald bounds, and enforce strict zero-oracle isolation programmatically across all agent and policy modules.
-  \item \textbf{Controlled Multi-Regime Evaluation \& Fairness Parity Controls:} Across six core experiments ($N=20$ seeds), an extended $N=30$ seed stability study, and a controlled execution-channel fairness parity study, we separate statistical validation and precondition-gating gains from deterministic macro execution.
-  \item \textbf{Transparent Reporting of Trade-Offs and Negative Boundaries:} Alongside large gains in unseen generalization ($54.50\%$), continual learning ($65.21\%$), post-shift recovery ($+20.80\text{ pp}$), and noisy-feedback recovery ($74.90\%\text{--}84.10\%$), we report all 12 non-significant hypothesis tests ($p_{\mathrm{Holm}} \ge 0.05$), high-noise false-rejection costs ($65.44\%$ FRR at $\eta=0.35$), and short-horizon sample-complexity trade-offs without selective omission.
+  \item \textbf{Mathematically Audited Sequential \& Capability-Isolated Formulations:} We distinguish Bayesian Beta credible bounds from frequentist confidence intervals, characterize discounted/adaptively selected SPRT stopping honestly as an empirically calibrated sequential heuristic rather than claiming classical i.i.d.\ Wald bounds, and enforce a hard runtime capability boundary (\texttt{AgentEnvironmentInterface}) separating evaluator-only oracle state from all agent and policy modules.
+  \item \textbf{Controlled Multi-Regime Evaluation \& Execution-Channel Attribution:} Across six core experiments ($N=20$ seeds), an extended $N=30$ seed stability study, and a controlled $2 \times 2$ execution-channel fairness parity study, we separate statistical validation and precondition-gating gains from deterministic macro execution.
+  \item \textbf{Transparent Reporting of Multiplicity, Trade-Offs, and Negative Boundaries:} Alongside large gains in unseen generalization ($54.50\%$), continual learning ($65.21\%$), post-shift recovery ($+20.80\text{ pp}$), and noisy-feedback recovery ($74.90\%\text{--}84.10\%$), we export reproducible per-family ($62/74$ sig.) and simultaneous global-74 ($60/74$ sig.) Holm-Bonferroni ledgers and report all non-significant outcomes, high-noise false-rejection costs ($65.44\%$ FRR at $\eta=0.35$), and short-horizon sample-complexity trade-offs without selective omission.
 \end{itemize}
 
 % ---------------------------------------------------------------------------
-% 5. MOTIVATION AND PROBLEM STATEMENT
+% SECTION 2: MOTIVATION AND PROBLEM STATEMENT
 % ---------------------------------------------------------------------------
 \section{Motivation and Problem Statement}
 Consider an autonomous agent processing a sequential stream of structured multi-step tasks $\mathcal{S} = (q_1, q_2, \dots, q_T)$ across domains $\mathcal{D}$ (e.g., API orchestration, system diagnosis, data pipeline repair, and resource planning). Each task $q_t = (x_t, d_t, \psi_t)$ presents a normalized surface query vector $x_t \in \mathbb{R}^m$, a domain identifier $d_t \in \mathcal{D}$, and an observable binary precondition vector $\psi_t \in \{0,1\}^K$. To solve $q_t$, the agent executes an $H$-step procedural workflow $\pi \in \mathcal{A}_0 \times \dots \times \mathcal{A}_{H-1}$ within a per-episode interaction budget of $B \ge 1$ rollouts.
@@ -112,13 +113,13 @@ Three coupled pathologies emerge in this regime when agents employ conventional 
 \end{enumerate}
 
 % ---------------------------------------------------------------------------
-% 6. RELATED WORK
+% SECTION 3: RELATED WORK
 % ---------------------------------------------------------------------------
 \section{Related Work}
 Our work intersects four research threads: experiential memory for autonomous agents, memory reliability and poisoning defenses, sequential statistical inference and bandit confidence bounds, and online concept-drift adaptation. Table~\ref{tab:related_work} summarizes how EVSA relates to representative frameworks without claiming unsupported ``first'' or ``only'' novelty on individual sub-mechanisms.
 
 \paragraph{Experiential, Reflective, and Workflow Memory in Agents.}
-ReAct \cite{yao2023react} interleaves reasoning and action traces within a single episode but retains no cross-episode memory. Reflexion \cite{shinn2023reflexion} and CLIN \cite{majumder2024clin} persist verbal self-reflections or causal abstractions across trials, while Generative Agents \cite{park2023generative} and MemGPT \cite{packer2023memgpt} manage long-horizon episodic stores via recency-relevance-importance scoring or OS-inspired paging. Moving from episodic traces to reusable skills, Voyager \cite{wang2024voyager} stores executable code skills verified once in deterministic Minecraft tasks; ExpeL \cite{zhao2024expel}, Agent Workflow Memory (AWM) \cite{wang2025awm}, Contextual Experience Replay (CER) \cite{liu2025cer}, Dynamic Cheatsheet \cite{suzgun2025dynamic}, A-MEM \cite{xu2025amem}, and ReasoningBank \cite{ouyang2026reasoningbank} extract reusable workflows, cheatsheets, linked Zettelkasten notes, or success/failure reasoning strategies. Most recently, AdaMEM \cite{zhang2026adamem} applies contextual Thompson sampling to decide \emph{whether} to integrate memory per query, and ExpRL \cite{jin2026exprl} bounds exploration during reasoning-driven experience selection. Unlike AdaMEM—which adapts retrieval integration probability via bandit sampling over an unquarantined store—EVSA couples multi-trial sequential hypothesis gating at \emph{admission}, conjunctive Safe-LGG precondition gating at \emph{retrieval}, and domain-scoped residual CUSUM \emph{invalidation} under concept shift.
+ReAct \cite{yao2023react} interleaves reasoning and action traces within a single episode but retains no cross-episode memory. Reflexion \cite{shinn2023reflexion} and CLIN \cite{majumder2024clin} persist verbal self-reflections or natural-language abstractions across trials, while Generative Agents \cite{park2023generative} and MemGPT \cite{packer2023memgpt} manage long-horizon episodic stores via recency-relevance-importance scoring or OS-inspired paging. Moving from episodic traces to reusable skills, Voyager \cite{wang2024voyager} stores executable code skills verified once in deterministic Minecraft tasks; ExpeL \cite{zhao2024expel}, Agent Workflow Memory (AWM) \cite{wang2025awm}, Contextual Experience Replay (CER) \cite{liu2025cer}, Dynamic Cheatsheet \cite{suzgun2026dynamic}, and A-MEM \cite{xu2025amem} extract reusable workflows, evolving test-time cheatsheets, or linked Zettelkasten notes. Most recently, ReasoningBank \cite{ouyang2026reasoningbank} distills generalizable reasoning strategies from self-judged successful and failed trajectories paired with Memory-aware Test-Time Scaling (\textsc{MaTTS}), AdaMEM \cite{zhang2026adamem} combines offline long-term trajectory memory with dynamically synthesized short-term strategy memory and step-wise memory fine-tuning (\textsc{STEP-MFT}), and ExpRL \cite{jin2026exprl} bounds exploration during reasoning-driven experience selection. Unlike ReasoningBank and AdaMEM—which distill or synthesize strategies over unquarantined trajectory stores without multi-trial sequential admission tests or online change-point invalidation—EVSA couples multi-trial sequential hypothesis gating at \emph{admission}, conjunctive Safe-LGG precondition gating at \emph{retrieval}, and domain-scoped residual CUSUM \emph{invalidation} under concept shift.
 
 \paragraph{Memory Reliability, Calibration, and Poisoning.}
 Xiong et al.\ \cite{xiong2024can} demonstrate that verbalized LLM confidence is systematically overconfident, making self-scored memory filtering unreliable. In a 2026 ACL study, Xiong et al.\ \cite{xiong2026memory} show that memory-augmented agents exhibit strong ``experience-following'' bias whereby misaligned stored records propagate errors over time and advocate selective addition coupled with deletion. From an adversarial perspective, AgentPoison \cite{chen2024agentpoison} and PoisonedRAG \cite{zou2025poisonedrag} demonstrate that injecting a handful of crafted records into an unvalidated RAG/agent store hijacks downstream decisions at $>90\%$ attack success. EVSA addresses stochastic and noisy-evaluator contamination structurally by requiring repeated empirical verification before promotion and monitoring post-promotion predictive residuals.
@@ -139,12 +140,12 @@ Page's cumulative sum (CUSUM) scheme \cite{page1954continuous}, adaptive windowi
 \textbf{Framework / System} & \textbf{Cross-Task Memory} & \textbf{Multi-Trial Stat.\ Gate} & \textbf{Calibrated Reliability} & \textbf{Explicit Preconditions} & \textbf{Online Drift Detector} & \textbf{Selective Quarantine} \\
 \midrule
 ReAct \cite{yao2023react} & No & No & No & No & No & No \\
-Reflexion \cite{shinn2023reflexion} / CLIN \cite{majumder2024clin} & Verbal / Causal Text & No (1-episode) & Verbalized only & Implicit in text & No & Overwrite / Buffer cap \\
+Reflexion \cite{shinn2023reflexion} / CLIN \cite{majumder2024clin} & Verbal / Abstractions & No (1-episode) & Verbalized only & Implicit in text & No & Overwrite / Buffer cap \\
 Voyager \cite{wang2024voyager} & Code Skills & Single-trial env check & Binary pass/fail & Implicit in description & No & No \\
 ExpeL \cite{zhao2024expel} / AWM \cite{wang2025awm} & Insights / Workflows & Heuristic count/LLM & Empirical frequency & Prompt text similarity & No & Rule edit / Append \\
-CER \cite{liu2025cer} / ReasoningBank \cite{ouyang2026reasoningbank} & Trajectories / Items & No & Outcome tag & Dense embedding & No & Top-$k$ dilution \\
-Dynamic Cheatsheet \cite{suzgun2025dynamic} / A-MEM \cite{xu2025amem} & Curated Notes & LLM-judged edit & Uncalibrated LLM & Linked keywords & No & Prompt rewrite \\
-AdaMEM \cite{zhang2026adamem} & Episodic / Bank & Bandit gate on use & Contextual Thompson & Context vector & Passive decay & Bandit down-weighting \\
+CER \cite{liu2025cer} / ReasoningBank \cite{ouyang2026reasoningbank} & Trajectories / Strategies & No (self-judged) & Self-judged tag & Dense embedding & No & Top-$k$ dilution \\
+Dynamic Cheatsheet \cite{suzgun2026dynamic} / A-MEM \cite{xu2025amem} & Curated Notes & LLM-judged edit & Uncalibrated LLM & Linked keywords & No & Prompt rewrite \\
+AdaMEM \cite{zhang2026adamem} & Hybrid LT + ST Bank & LLM synthesis / MFT & Uncalibrated LLM & Query / state context & Short-term refresh & Summary overwrite \\
 \midrule
 \textbf{EVSA (This Study)} & \textbf{3-Tier Strategies} & \textbf{Discounted SPRT Gate} & \textbf{Beta Credible Bound} & \textbf{Conjunctive $\phi_h$ + Safe LGG} & \textbf{Per-Domain CUSUM} & \textbf{Evidence Quarantine} \\
 \bottomrule
@@ -152,7 +153,7 @@ AdaMEM \cite{zhang2026adamem} & Episodic / Bank & Bandit gate on use & Contextua
 \end{table*}
 
 % ---------------------------------------------------------------------------
-% 7. RESEARCH QUESTIONS AND HYPOTHESES
+% SECTION 4: RESEARCH QUESTIONS AND HYPOTHESES
 % ---------------------------------------------------------------------------
 \section{Research Questions and Hypotheses}
 We structure our empirical investigation around five pre-specified Research Questions (\textbf{RQ1--RQ5}) and corresponding falsifiable null/alternative hypothesis pairs ($H_{0,k}$ vs.\ $H_{1,k}$) tested across paired random seeds:
@@ -171,7 +172,7 @@ We structure our empirical investigation around five pre-specified Research Ques
 \end{itemize}
 
 % ---------------------------------------------------------------------------
-% 8. PROPOSED EVSA ARCHITECTURE
+% SECTION 5: PROPOSED EVSA ARCHITECTURE
 % ---------------------------------------------------------------------------
 \section{Proposed EVSA Architecture}
 EVSA organizes experiential adaptation as a ten-module closed-loop architecture (Figure~\ref{fig:arch}). Rather than storing unstructured transcripts, the \textbf{Tiered Strategy Repository} (\texttt{src/memory/repository.py}) maintains structured hypotheses $h = (\mathrm{id}_h, d_h, c_h, \phi_h, \pi_h, \tau_h, \alpha_h, \beta_h, \Lambda_h, n_h)$, where $d_h \in \mathcal{D}$ is the task domain, $c_h \in \mathbb{R}^m$ is the unit-normalized query centroid, $\phi_h \subseteq \{0,\dots,K-1\} \times \{0,1\}$ is a conjunctive precondition set, $\pi_h \in \mathcal{A}_0 \times \dots \times \mathcal{A}_{H-1}$ is an $H$-step procedural workflow, and $\tau_h$ denotes the epistemic tier in $\{\texttt{CANDIDATE}, \texttt{VALIDATED}, \texttt{QUARANTINED}\}$ (Figure~\ref{fig:val_workflow}).
@@ -231,7 +232,7 @@ Algorithm~\ref{alg:evsa} details EVSA's per-episode decision and update cycle (\
 \end{algorithm}
 
 % ---------------------------------------------------------------------------
-% 9. MATHEMATICAL FORMULATION
+% SECTION 6: MATHEMATICAL FORMULATION
 % ---------------------------------------------------------------------------
 \section{Mathematical Formulation}
 \label{sec:math}
@@ -317,20 +318,20 @@ with slack $\nu_{\mathrm{drift}} = 0.12$, alarm threshold $h_{\mathrm{drift}} = 
 \end{figure*}
 
 % ---------------------------------------------------------------------------
-% 10. BENCHMARK DESIGN
+% SECTION 7: BENCHMARK DESIGN
 % ---------------------------------------------------------------------------
 \section{Benchmark Design: ShiftBench-Sim v1.0}
-Evaluating memory validation, drift invalidation, and noisy-feedback calibration across hundreds of thousands of rollouts requires exact control over ground-truth structural invariants without hidden pretraining leakage. We construct \textbf{ShiftBench-Sim v1.0} (\texttt{src/benchmark/environment.py}), a deterministic symbolic-procedural multi-domain benchmark parameterized as follows:
+Evaluating memory validation, drift invalidation, and noisy-feedback calibration across hundreds of thousands of rollouts requires exact control over ground-truth structural invariants without hidden pretraining leakage. We construct \textbf{ShiftBench-Sim v1.0} (\texttt{src/benchmark/environment.py}), a controlled, low-dimensional synthetic symbolic-procedural multi-domain simulation (not a live neural LLM or natural-language benchmark) parameterized as follows:
 \begin{itemize}
-  \item \textbf{Domains and Heterogeneous Action Space:} $|\mathcal{D}| = 4$ operational domains (\texttt{api\_orchestration}, \texttt{system\_diagnosis}, \texttt{data\_pipeline}, \texttt{resource\_planning}). Each task requires planning an $H=4$-step workflow $\pi \in \mathcal{A}_0 \times \mathcal{A}_1 \times \mathcal{A}_2 \times \mathcal{A}_3$ with action cardinalities $(4, 5, 4, 3)$ ($240$ distinct workflows per domain).
-  \item \textbf{Governing vs.\ Nuisance Preconditions:} Each task exposes $K=5$ binary predicates $\psi_t \in \{0,1\}^5$. Bits $(\psi_0, \psi_1, \psi_2)$ define $C = 2^3 = 8$ latent workflow archetypes $c = 4\psi_0 + 2\psi_1 + \psi_2 \in \{0,\dots,7\}$. Bits $(\psi_3, \psi_4)$ are pure nuisance attributes that alter surface context without changing $\pi^*$. Archetypes $c \in \{0,\dots,6\}$ appear during stationary training; \textbf{archetype $c=7$ ($\psi_0=\psi_1=\psi_2=1$) is held out strictly for zero-shot compositional testing}, with Steps 0--2 governed additively by individual bits and Step 3 governed by a non-linear XOR parity interaction ($\psi_0 \oplus \psi_1$).
-  \item \textbf{Controlled Surface-Embedding Collisions:} Normalized task embeddings $x_t \in \mathbb{R}^{20}$ ($\|x_t\|_2=1$) concatenate domain features (weight $0.50$), noisy structural features (weight $0.36$), and 8 shared surface-topic vectors (weight $0.82$). Tasks sharing surface topics across conflicting archetypes therefore exhibit high cosine similarity, penalizing precondition-blind retrieval.
+  \item \textbf{Domains and Heterogeneous Action Space:} $|\mathcal{D}| = 4$ operational domains (\texttt{api\_orchestration}, \texttt{system\_diagnosis}, \texttt{data\_pipeline}, \texttt{resource\_planning}). Each task requires planning an $H=4$-step discrete operator workflow $\pi \in \mathcal{A}_0 \times \mathcal{A}_1 \times \mathcal{A}_2 \times \mathcal{A}_3$ with action cardinalities $(4, 5, 4, 3)$ ($240$ distinct workflows per domain).
+  \item \textbf{Governing vs.\ Nuisance Preconditions:} Each task exposes $K=5$ observable binary predicates $\psi_t \in \{0,1\}^5$. Bits $(\psi_0, \psi_1, \psi_2)$ define $C = 2^3 = 8$ latent workflow archetypes $c = 4\psi_0 + 2\psi_1 + \psi_2 \in \{0,\dots,7\}$. Bits $(\psi_3, \psi_4)$ are pure nuisance attributes that alter surface context without changing $\pi^*$. Archetypes $c \in \{0,\dots,6\}$ appear during stationary training; \textbf{archetype $c=7$ ($\psi_0=\psi_1=\psi_2=1$) is held out strictly for zero-shot compositional testing}, with Steps 0--2 governed additively by individual bits and Step 3 governed by a non-linear XOR parity interaction ($\psi_0 \oplus \psi_1$).
+  \item \textbf{Controlled Surface-Embedding Collisions:} Normalized synthetic task embeddings $x_t \in \mathbb{R}^{20}$ ($\|x_t\|_2=1$) concatenate domain features (weight $0.50$), noisy structural features (weight $0.36$), and 8 shared surface-topic vectors (weight $0.82$). Tasks sharing surface topics across conflicting archetypes therefore exhibit high cosine similarity, penalizing precondition-blind retrieval.
   \item \textbf{Regime Shifts and Stochastic Outcome Probabilities:} Regime $r=0$ defines baseline optimal workflows $\pi^*_{d,c,0}$. Regime $r=1$ (abrupt partial-domain concept shift) shifts Steps 1 and 2 by $+2 \pmod{|\mathcal{A}_s|}$ across three domains while keeping \texttt{resource\_planning} invariant ($r=0$) as an unshifted control. Regime $r=2$ (compound shift) shifts Step 0 and Step 2 across all four domains alongside covariate concentration onto $c \in \{4,5,6,7\}$. Executing 4, 3, 2, or $\le 1$ matching steps succeeds with probabilities $(p_{\mathrm{opt}}, p_{\mathrm{sub3}}, p_{\mathrm{sub2}}, p_{\mathrm{sub1}}) = (0.92, 0.28, 0.09, 0.02)$.
-  \item \textbf{Strict Zero-Oracle Isolation:} \texttt{TaskInstance} exposes solely observable task inputs and \texttt{RolloutResult} exposes solely observed feedback $(\pi, \tilde{y}_t, \tilde{r}_t, \text{failed\_step})$. Furthermore, \texttt{CalibratedSymbolicLLMBackbone} (\texttt{src/benchmark/llm\_backbone.py}) computes zero-shot step priors ($0.67$ marginal step competence) strictly from observable $(d_t, \psi_t)$ using a linear inclusive-OR heuristic ($\psi_0 \lor \psi_1$) on Step 3—possessing zero access to $\pi^*$, $c(q_t)$, $r(t)$, or the latent XOR rule, as verified by unit tests \texttt{test\_task\_\allowbreak and\_\allowbreak rollout\_\allowbreak have\_\allowbreak zero\_\allowbreak oracle\_\allowbreak fields} and \texttt{test\_zero\_\allowbreak oracle\_\allowbreak leakage\_\allowbreak across\_\allowbreak all\_\allowbreak agent\_\allowbreak and\_\allowbreak backbone\_\allowbreak modules}.
+  \item \textbf{Hard Capability-Isolated Oracle Boundary:} Beyond omitting oracle fields from \texttt{Task\-Instance}, \texttt{Rollout\-Result}, and \texttt{Agent\-Episode\-Outcome}, all agent rollouts are routed through \texttt{Agent\-Environment\-Interface} (\texttt{src/\allowbreak benchmark/\allowbreak agent\_\allowbreak interface.py}), a slot-restricted capability wrapper exposing solely \texttt{evaluate\_\allowbreak plan(\allowbreak task,\allowbreak\ executed\_\allowbreak plan)} while evaluator-side telemetry (\texttt{Episode\-Telemetry}) is finalized exclusively inside \texttt{run\_\allowbreak audited\_\allowbreak episode} (\texttt{src/\allowbreak evaluation/\allowbreak audit.py}). Passing a raw \texttt{Non\-Stationary\-Task\-Environment} to any agent immediately raises \texttt{TypeError}, and \texttt{Calibrated\-Symbolic\-LLM\-Backbone} (\texttt{src/\allowbreak benchmark/\allowbreak llm\_\allowbreak backbone.py}) computes zero-shot step priors ($0.67$ marginal step competence) strictly from observable $(d_t, \psi_t)$ using a linear inclusive-OR heuristic ($\psi_0 \lor \psi_1$) on Step 3—verified programmatically by \texttt{test\_hard\_\allowbreak interface\_\allowbreak boundary\_\allowbreak separates\_\allowbreak agent\_\allowbreak from\_\allowbreak oracle} and \texttt{test\_zero\_\allowbreak oracle\_\allowbreak leakage\_\allowbreak across\_\allowbreak all\_\allowbreak agent\_\allowbreak and\_\allowbreak backbone\_\allowbreak modules}.
 \end{itemize}
 
 % ---------------------------------------------------------------------------
-% 11. EXPERIMENTAL METHODOLOGY
+% SECTION 8: EXPERIMENTAL METHODOLOGY
 % ---------------------------------------------------------------------------
 \section{Experimental Methodology}
 All agents share the identical \texttt{CalibratedSymbolicLLMBackbone}, identical task streams per seed, and identical per-episode rollout budget $B$ ($B=2$ during adaptation, $B=1$ during frozen evaluation). Six core experiments plus two sensitivity audits are executed across $N=20$ primary seeds ($\{1001, \dots, 1020\}$; extended to $N=30$ seeds $\{1001, \dots, 1030\}$ for stability verification):
@@ -344,7 +345,7 @@ All agents share the identical \texttt{CalibratedSymbolicLLMBackbone}, identical
 \end{enumerate}
 
 % ---------------------------------------------------------------------------
-% 12. BASELINE IMPLEMENTATIONS
+% SECTION 9: BASELINE IMPLEMENTATIONS
 % ---------------------------------------------------------------------------
 \section{Baseline Implementations and Fairness Audit}
 \label{sec:baselines}
@@ -357,10 +358,10 @@ To ensure budget-matched algorithmic comparisons on ShiftBench-Sim v1.0, we impl
 \end{itemize}
 
 \paragraph{Audit of Execution-Channel Asymmetry and Controlled Parity Design.}
-In default mode, once a strategy reaches \texttt{VALIDATED}, EVSA invokes $\pi_h$ directly as a compiled deterministic macro, whereas Baselines B--D pass retrieved workflows through \texttt{backbone.generate\_plan} (weighted adherence $\le 0.96$). To prevent misattributing macro determinism to memory quality, we evaluate a full $2 \times 2$ execution-channel parity control (\texttt{Direct Macro} vs.\ \texttt{Stochastic Prompt} in both EVSA and Experience Replay) across $N=20$ seeds (Figure~\ref{fig:app_retrieval}b and Table~\ref{tab:fairness}).
+In default mode, once a strategy reaches \texttt{VALIDATED}, EVSA invokes $\pi_h$ directly as a compiled deterministic macro, whereas Baselines B--D pass retrieved workflows through \texttt{backbone.execute\_guided\_plan} (weighted adherence $\le 0.96$). To prevent misattributing macro determinism to memory quality, we evaluate a full $2 \times 2$ execution-channel parity control (\texttt{Direct Macro} vs.\ \texttt{Stochastic Prompt} in both EVSA and Experience Replay) across $N=20$ seeds (Figure~\ref{fig:app_retrieval}b and Table~\ref{tab:fairness}).
 
 % ---------------------------------------------------------------------------
-% 13. EXPERIMENTAL RESULTS
+% SECTION 10: EXPERIMENTAL RESULTS
 % ---------------------------------------------------------------------------
 \section{Experimental Results}
 \label{sec:results}
@@ -473,10 +474,10 @@ Baseline D: Experience Replay & $54.25 \pm 8.85$ & $27.40 \pm 8.64$ & $30.80 \pm
   \label{fig:exp3}
 \end{figure*}
 
-Simultaneously, on the stationary control domain (\texttt{resource\_planning}), EVSA preserves \textbf{82.21\% $\pm$ 11.21\%} accuracy throughout Phase II ($+24.72\text{ to }+31.07\text{ pp}$ above baselines, $p_{\mathrm{Holm}} \le 4.08 \times 10^{-6}$), confirming zero collateral forgetting. We also report a subtle metric artifact on \emph{proportional Recovery Ratio} ($\mathrm{SR}_{\mathrm{rec}} / \mathrm{SR}_{\mathrm{pre}}$): while EVSA ($70.22\%$) significantly exceeds Static ($52.30\%, p_{\mathrm{Holm}}=0.0017$) and Reflection ($53.93\%, p_{\mathrm{Holm}}=0.0076$), its comparisons versus Conventional Memory ($61.03\%$) and Experience Replay ($58.55\%$) are \textbf{not statistically significant} ($p_{\mathrm{Holm}} = 0.0988$) because those baselines divide stagnant post-shift scores ($\sim 31\%\text{--}33\%$) by much lower pre-shift denominators ($\sim 54\%$ vs.\ EVSA's $81.75\%$).
+Simultaneously, on the stationary control domain (\texttt{resource\_planning}), EVSA preserves \textbf{82.21\% $\pm$ 11.21\%} accuracy throughout Phase II (vs.\ $81.75\%$ pre-shift; $+24.72\text{ to }+31.07\text{ pp}$ above baselines, $p_{\mathrm{Holm}} \le 4.08 \times 10^{-6}$), showing no measurable cross-domain degradation on unshifted tasks, whereas within alarmed shifted domains any unfalsified \texttt{VALIDATED} strategies conservatively undergo posterior discounting ($\gamma_{\mathrm{shift}} = 0.35$) back to \texttt{CANDIDATE} until re-verified. We also report a subtle metric artifact on \emph{proportional Recovery Ratio} ($\mathrm{SR}_{\mathrm{rec}} / \mathrm{SR}_{\mathrm{pre}}$): while EVSA ($70.22\%$) significantly exceeds Static ($52.30\%, p_{\mathrm{Holm}}=0.0017$) and Reflection ($53.93\%, p_{\mathrm{Holm}}=0.0076$), its comparisons versus Conventional Memory ($61.03\%$) and Experience Replay ($58.55\%$) are \textbf{not statistically significant} ($p_{\mathrm{Holm}} = 0.0988$) because those baselines divide stagnant post-shift scores ($\sim 31\%\text{--}33\%$) by much lower pre-shift denominators ($\sim 54\%$ vs.\ EVSA's $81.75\%$).
 
 \subsection{Experiment 4: Feedback Corruption and Safe-LGG Store Decomposition}
-Table~\ref{tab:exp4} and Figure~\ref{fig:exp4} evaluate robustness when $\eta \in \{0.10, 0.25, 0.35\}$ of environment outcomes are symmetrically inverted during $t \in [0, 200)$ before clean feedback resumes ($t \in [200, 300)$). Unvalidated memory baselines accept $21.93\%\text{--}38.71\%$ of suboptimal rollouts, poisoning $58.70\%\text{--}85.50\%$ of their active memory and capping post-corruption clean recovery at $45.20\%\text{--}52.30\%$. In contrast, EVSA restricts Rollout FAR to \textbf{1.34\%, 1.76\%, and 2.53\%}, significantly reduces active memory contamination across \textbf{all three noise levels} (including $\eta=0.35$: $68.29\%$ vs.\ $83.12\%\text{--}85.50\%$, $p_{\mathrm{Holm}} = 0.0063$), and recovers rapidly to \textbf{84.10\%, 77.30\%, and 74.90\%} clean accuracy ($d_z \in [2.45, 4.85]$, $p_{\mathrm{Holm}} \le 1.95 \times 10^{-9}$).
+Table~\ref{tab:exp4} and Figure~\ref{fig:exp4} evaluate robustness when $\eta \in \{0.10, 0.25, 0.35\}$ of environment outcomes are symmetrically inverted during $t \in [0, 200)$ before clean feedback resumes ($t \in [200, 300)$). Unvalidated memory baselines accept $21.93\%\text{--}38.71\%$ of suboptimal rollouts, poisoning $58.70\%\text{--}85.50\%$ of their active memory and capping post-corruption clean recovery at $45.20\%\text{--}52.30\%$. In contrast, EVSA restricts Rollout FAR to \textbf{1.34\%, 1.76\%, and 2.53\%}, significantly reduces active memory contamination across \textbf{all three noise levels} under per-family Holm adjustment (including $\eta=0.35$: $68.29\%$ vs.\ $83.12\%\text{--}85.50\%$, $p_{\mathrm{Holm}} = 0.0063$; under simultaneous global 74-test pooling, $\eta=0.35$ vs.\ Replay and Reflection remain $<0.05$ while vs.\ Conventional Memory sits at the borderline $p_{\mathrm{Glob74}} = 0.0510$), and recovers rapidly to \textbf{84.10\%, 77.30\%, and 74.90\%} clean accuracy ($d_z \in [2.45, 4.85]$, $p_{\mathrm{Holm}} \le 1.95 \times 10^{-9}$).
 
 \begin{table*}[t]
 \centering
@@ -523,7 +524,7 @@ Table~\ref{tab:exp4} and Figure~\ref{fig:exp4} evaluate robustness when $\eta \i
 \end{enumerate}
 
 % ---------------------------------------------------------------------------
-% 14. STATISTICAL ANALYSIS
+% SECTION 11: STATISTICAL ANALYSIS
 % ---------------------------------------------------------------------------
 \section{Statistical Analysis, Power, and Multiplicity Sensitivity}
 \label{sec:stats}
@@ -532,44 +533,46 @@ All comparative claims are evaluated across $N=20$ paired random seeds using two
 \paragraph{Power Analysis ($N=20$ Paired Seeds).}
 Evaluating the exact non-central $t_{19}$ distribution at two-sided $\alpha=0.05$ yields a Minimum Detectable Effect Size (MDES) of \textbf{$d_z = 0.660$ for 80\% statistical power} and \textbf{$d_z = 0.765$ for 90\% power}. All primary comparisons against baselines in Experiments 1--4 exhibit $|d_z| \in [0.74, 6.35]$ (achieved power $0.88$ to $1.000$), confirming high power for main effects while explaining why subtle ratio or short-horizon ablation differences ($|d_z| \le 0.47$) are appropriately classified as non-significant.
 
-\paragraph{Hypothesis Family Definition and Global-74 Sensitivity Audit.}
-We organize all \textbf{74 paired hypothesis tests} into \textbf{16 pre-defined metric-specific families} adjusted via Holm's sequentially rejective Bonferroni procedure \cite{holm1979simple}. To verify robustness against multiplicity definition, we also compute \textbf{simultaneous global Holm-Bonferroni adjustment across all 74 tests pooled together} (\texttt{t\_pvalue\_holm\_global74} in \texttt{paired\_hypothesis\_tests\_holm.csv}): \textbf{62 of 74 tests} are significant at $\alpha=0.05$ under per-family Holm-Bonferroni, and \textbf{60 of 74 tests} remain significant under global 74-test pooling (all 12 non-significant outcomes occur strictly in the two Exp-3 normalized Recovery Ratio baseline comparisons and the short-horizon Exp-5 accuracy ablations analyzed below). Table~\ref{tab:stats} reports representative tests across all families.
+\paragraph{Hypothesis Family Definition and Reproducible Global-74 Sensitivity Audit.}
+We organize all \textbf{74 paired hypothesis tests} into \textbf{16 pre-defined metric-specific families} adjusted via Holm's sequentially rejective Bonferroni procedure \cite{holm1979simple} (\texttt{apply\_holm\_bonferroni}). To audit sensitivity to multiplicity scope, \texttt{apply\_global\_holm\_bonferroni} simultaneously computes \textbf{global Holm-Bonferroni adjustment across all 74 tests pooled together} and exports \texttt{t\_pvalue\_holm\_global74}, \texttt{wilcoxon\_pvalue\_holm\_global74}, and \texttt{significant\_global74\_at\_05} directly into \texttt{paired\_hypothesis\_tests\_holm.csv}: \textbf{62 of 74 tests} are significant at $\alpha=0.05$ under per-family Holm-Bonferroni, and \textbf{60 of 74 tests} remain significant under simultaneous global 74-test pooling (specifically, the 12 per-family non-significant outcomes occur in the two Exp-3 normalized Recovery Ratio comparisons and the short-horizon Exp-5 accuracy ablations, while two borderline per-family comparisons—Exp-4 $\eta=0.35$ FDP vs.\ Conventional Memory at $p_{\mathrm{Holm}}=0.0063 \to 0.0510$ and Exp-5 overall stream SR vs.\ \texttt{w/o Shift Detection} at $p_{\mathrm{Holm}}=0.0464 \to 0.1508$—cross $0.05$ under simultaneous 74-test pooling). Table~\ref{tab:stats} reports representative tests including both global-74 borderlines.
 
 \begin{table*}[t]
 \centering
-\caption{Selected paired statistical tests ($N=20$ seeds) showing parametric ($t_{\mathrm{Holm}}$), Wilcoxon ($W_{\mathrm{Holm}}$), and global 74-test Holm-Bonferroni ($t_{\mathrm{Glob74}}$) adjustments, including non-significant boundaries.}
+\caption{Selected paired statistical tests ($N=20$ seeds) showing parametric ($t_{\mathrm{Holm}}$), Wilcoxon ($W_{\mathrm{Holm}}$), and reproducible global 74-test Holm-Bonferroni ($t_{\mathrm{Glob74}}$) adjustments, including borderline and non-significant outcomes.}
 \label{tab:stats}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{llcccccc}
 \toprule
-\textbf{Family / Metric} & \textbf{Comparison} & \textbf{Mean Diff} & \textbf{Cohen's $d_z$} & \textbf{Per-Fam $t_{\mathrm{Holm}}$} & \textbf{Wilcoxon $W_{\mathrm{Holm}}$} & \textbf{Global-74 $t_{\mathrm{Glob74}}$} & \textbf{Decision} \\
+\textbf{Family / Metric} & \textbf{Comparison} & \textbf{Mean Diff} & \textbf{Cohen's $d_z$} & \textbf{Per-Fam $t_{\mathrm{Holm}}$} & \textbf{Wilcoxon $W_{\mathrm{Holm}}$} & \textbf{Global-74 $t_{\mathrm{Glob74}}$} & \textbf{Decision (Fam / Glob74)} \\
 \midrule
-Exp 1 Overall SR & EVSA vs.\ Conv.\ Memory (best base) & $+0.2488$ & $+4.47$ & $8.15 \times 10^{-14}$ & $3.53 \times 10^{-4}$ & $2.18 \times 10^{-12}$ & Significant \\
-Exp 1 Zero-Shot Comp.\ & EVSA vs.\ Experience Replay & $+0.1900$ & $+2.12$ & $4.87 \times 10^{-8}$ & $3.52 \times 10^{-4}$ & $6.78 \times 10^{-7}$ & Significant \\
-Exp 1 Zero-Shot Comp.\ & EVSA vs.\ Static & $+0.1319$ & $+1.57$ & $1.07 \times 10^{-6}$ & $3.52 \times 10^{-4}$ & $3.22 \times 10^{-5}$ & Significant \\
-Fairness Stoch.\ Exec & EVSA vs.\ Replay (both Stoch.) & $+0.2204$ & $+4.09$ & $1.57 \times 10^{-13}$ & $1.75 \times 10^{-4}$ & $9.92 \times 10^{-12}$ & Significant \\
-Fairness Macro Exec & EVSA vs.\ Replay (both Macro) & $+0.2302$ & $+4.47$ & $6.41 \times 10^{-14}$ & $1.75 \times 10^{-4}$ & $2.18 \times 10^{-12}$ & Significant \\
-Exp 2 Terminal Block-8 & EVSA vs.\ Conv.\ Memory & $+0.2953$ & $+3.00$ & $3.85 \times 10^{-11}$ & $3.52 \times 10^{-4}$ & $2.08 \times 10^{-9}$ & Significant \\
-Exp 3 Adaptation Gain & EVSA vs.\ Conv.\ Memory & $+0.1610$ & $+0.96$ & $4.08 \times 10^{-4}$ & $1.58 \times 10^{-3}$ & $8.58 \times 10^{-3}$ & Significant \\
-Exp 3 Recovery Ratio & EVSA vs.\ Conv.\ Memory & $+9.19\%$ & $+0.41$ & $0.0988$ & $0.0881$ & $0.815$ & \textbf{Non-Sig.} \\
-Exp 4 Contam.\ ($\eta=0.35$) & EVSA vs.\ Experience Replay & $-0.1520$ & $-0.76$ & $6.27 \times 10^{-3}$ & $9.46 \times 10^{-3}$ & $4.70 \times 10^{-2}$ & Significant \\
-Exp 4 Clean Rec.\ ($\eta=0.35$) & EVSA vs.\ Reflection (best base) & $+0.2550$ & $+2.55$ & $1.26 \times 10^{-9}$ & $3.49 \times 10^{-4}$ & $2.84 \times 10^{-8}$ & Significant \\
-Exp 5 Ablation Overall & Full vs.\ w/o Applicability & $+0.2475$ & $+4.80$ & $4.35 \times 10^{-14}$ & $4.42 \times 10^{-4}$ & $6.18 \times 10^{-13}$ & Significant \\
-Exp 5 Ablation Post-Shift & Full vs.\ w/o Shift Detection & $+0.0892$ & $+0.88$ & $3.70 \times 10^{-3}$ & $6.38 \times 10^{-3}$ & $1.75 \times 10^{-2}$ & Significant \\
-Exp 5 Ablation Overall & Full vs.\ w/o Evidence Validation & $-0.0171$ & $-0.28$ & $0.684$ & $0.495$ & $1.000$ & \textbf{Non-Sig.} \\
-Exp 5 Ablation Overall & Full vs.\ w/o Confidence Est.\ & $+0.0075$ & $+0.23$ & $0.684$ & $0.495$ & $1.000$ & \textbf{Non-Sig.} \\
+Exp 1 Overall SR & EVSA vs.\ Conv.\ Memory (best base) & $+0.2488$ & $+4.47$ & $8.15 \times 10^{-14}$ & $3.53 \times 10^{-4}$ & $2.18 \times 10^{-12}$ & Sig.\ / Sig.\ \\
+Exp 1 Zero-Shot Comp.\ & EVSA vs.\ Experience Replay & $+0.1900$ & $+2.12$ & $4.87 \times 10^{-8}$ & $3.52 \times 10^{-4}$ & $4.63 \times 10^{-7}$ & Sig.\ / Sig.\ \\
+Exp 1 Zero-Shot Comp.\ & EVSA vs.\ Static & $+0.1319$ & $+1.57$ & $1.07 \times 10^{-6}$ & $3.52 \times 10^{-4}$ & $3.22 \times 10^{-5}$ & Sig.\ / Sig.\ \\
+Fairness Stoch.\ Exec & EVSA vs.\ Replay (both Stoch.) & $+0.2204$ & $+4.09$ & $1.57 \times 10^{-13}$ & $1.75 \times 10^{-4}$ & $9.92 \times 10^{-12}$ & Sig.\ / Sig.\ \\
+Fairness Macro Exec & EVSA vs.\ Replay (both Macro) & $+0.2302$ & $+4.47$ & $6.41 \times 10^{-14}$ & $1.75 \times 10^{-4}$ & $2.18 \times 10^{-12}$ & Sig.\ / Sig.\ \\
+Exp 2 Terminal Block-8 & EVSA vs.\ Conv.\ Memory & $+0.2953$ & $+3.00$ & $3.85 \times 10^{-11}$ & $3.52 \times 10^{-4}$ & $2.08 \times 10^{-9}$ & Sig.\ / Sig.\ \\
+Exp 3 Adaptation Gain & EVSA vs.\ Conv.\ Memory & $+0.1610$ & $+0.96$ & $4.08 \times 10^{-4}$ & $1.58 \times 10^{-3}$ & $8.58 \times 10^{-3}$ & Sig.\ / Sig.\ \\
+Exp 3 Recovery Ratio & EVSA vs.\ Conv.\ Memory & $+9.19\%$ & $+0.41$ & $0.0988$ & $0.0881$ & $0.815$ & \textbf{Non-Sig.\ / Non-Sig.} \\
+Exp 4 Contam.\ ($\eta=0.35$) & EVSA vs.\ Experience Replay & $-0.1520$ & $-0.76$ & $6.27 \times 10^{-3}$ & $9.46 \times 10^{-3}$ & $4.69 \times 10^{-2}$ & Sig.\ / Sig.\ \\
+Exp 4 Contam.\ ($\eta=0.35$) & EVSA vs.\ Conv.\ Memory & $-0.1483$ & $-0.74$ & $6.27 \times 10^{-3}$ & $1.06 \times 10^{-2}$ & $5.10 \times 10^{-2}$ & \textbf{Sig.\ / Borderline} \\
+Exp 4 Clean Rec.\ ($\eta=0.35$) & EVSA vs.\ Reflection (best base) & $+0.2550$ & $+2.55$ & $1.26 \times 10^{-9}$ & $3.49 \times 10^{-4}$ & $2.84 \times 10^{-8}$ & Sig.\ / Sig.\ \\
+Exp 5 Ablation Overall & Full vs.\ w/o Applicability & $+0.2475$ & $+4.80$ & $4.35 \times 10^{-14}$ & $4.42 \times 10^{-4}$ & $6.18 \times 10^{-13}$ & Sig.\ / Sig.\ \\
+Exp 5 Ablation Post-Shift & Full vs.\ w/o Shift Detection & $+0.0892$ & $+0.88$ & $3.70 \times 10^{-3}$ & $6.38 \times 10^{-3}$ & $1.75 \times 10^{-2}$ & Sig.\ / Sig.\ \\
+Exp 5 Ablation Overall & Full vs.\ w/o Shift Detection & $+0.0225$ & $+0.62$ & $4.64 \times 10^{-2}$ & $1.81 \times 10^{-2}$ & $0.151$ & \textbf{Sig.\ / Non-Sig.} \\
+Exp 5 Ablation Overall & Full vs.\ w/o Evidence Validation & $-0.0171$ & $-0.28$ & $0.684$ & $0.495$ & $1.000$ & \textbf{Non-Sig.\ / Non-Sig.} \\
+Exp 5 Ablation Overall & Full vs.\ w/o Confidence Est.\ & $+0.0075$ & $+0.23$ & $0.684$ & $0.495$ & $1.000$ & \textbf{Non-Sig.\ / Non-Sig.} \\
 \bottomrule
 \end{tabular}}
 \end{table*}
 
 % ---------------------------------------------------------------------------
-% 15. ABLATION STUDIES
+% SECTION 12: ABLATION STUDIES
 % ---------------------------------------------------------------------------
 \section{Ablation Studies}
 Table~\ref{tab:exp5} and Figure~\ref{fig:exp5} report Experiment 5 leave-one-out ablations across a 360-episode stream ($180$ pre-shift episodes at $\eta=0.15$ followed by $180$ post-shift episodes in $r=1$ across 28 domain-archetype cells, i.e., an intentionally tight horizon of $180/28 \approx 6.4$ visits per cell per regime):
 \begin{enumerate}
   \item \textbf{w/o Applicability Conditions ($\phi_h(\psi_t) \equiv 1$):} Causes catastrophic collapse—overall stream SR plunges by \textbf{$-24.75$ pp} ($53.81\% \to 29.06\%$, $d_z = 4.80, p_{\mathrm{Holm}} = 4.35 \times 10^{-14}$), post-shift SR falls $-31.42\text{ pp}$ ($58.58\% \to 27.17\%$), and pre-shift active FDP hits $90.00\%$ as precondition-blind rules collide across archetypes.
-  \item \textbf{w/o Shift Detection (CUSUM disabled):} Eliminating online residual CUSUM monitoring significantly degrades both overall stream SR (\textbf{$-2.25$ pp}, $53.81\% \to 51.56\%, p_{\mathrm{Holm}} = 0.0464$) and post-shift recovered SR (\textbf{$-8.92$ pp}, $58.58\% \to 49.67\%, d_z = 0.88, p_{\mathrm{Holm}} = 0.0037$), while raising post-shift active contamination from $41.89\%$ to $53.55\%$.
+  \item \textbf{w/o Shift Detection (CUSUM disabled):} Eliminating online residual CUSUM monitoring degrades post-shift recovered SR by \textbf{$-8.92$ pp} ($58.58\% \to 49.67\%, d_z = 0.88, p_{\mathrm{Holm}} = 0.0037, p_{\mathrm{Glob74}} = 0.0175$) and overall stream SR by \textbf{$-2.25$ pp} ($53.81\% \to 51.56\%, p_{\mathrm{Holm}} = 0.0464$ per-family; $p_{\mathrm{Glob74}} = 0.1508$ under simultaneous 74-test pooling because the stationary first half is identical across both variants), while raising post-shift active contamination from $41.89\%$ to $53.55\%$.
   \item \textbf{Sample-Complexity vs.\ Epistemic-Purity Trade-Off (\texttt{w/o Evidence Validation}):} In a short $6.4$-visit-per-cell regime where frozen evaluation executes strictly \texttt{VALIDATED} rules, 1-trial promotion inflates the validated repository $4.8\times$ ($42.55$ vs.\ $8.95$ strategies) and \textbf{more than doubles pre-shift active contamination ($70.56\%$ vs.\ $33.18\%$)} and post-shift contamination ($69.22\%$ vs.\ $41.89\%$), while achieving a non-significantly higher raw coverage score ($55.51\%$ vs.\ $53.81\%, \Delta = +1.71\text{ pp}, p_{\mathrm{Holm}} = 0.684$). Thus $n_{\min}=3$ SPRT + Safe LGG trades slower initial coverage in sparse-visit regimes for a $>2\times$ reduction in false discoveries that becomes decisive under sustained corruption (Experiment 4).
   \item \textbf{w/o Confidence Estimation (raw empirical frequency $\hat{p}_h^{\mathrm{emp}}$ replacing Beta credible quantiles):} Removing small-sample Bayesian credible intervals reduces noisy pre-shift SR by $-1.67\text{ pp}$ ($68.58\% \to 66.92\%$) and shrinks promoted strategies from $8.95$ to $6.25$ due to premature candidate rejection on unlucky early misses, though overall stream SR difference ($-0.75\text{ pp}, 53.06\%$ vs.\ $53.81\%$) is non-significant ($p_{\mathrm{Holm}}=0.684$) when SPRT and preconditions remain active.
   \item \textbf{w/o Memory Invalidation (quarantine disabled while retaining CUSUM statistics):} Overall SR changes minimally ($53.08\%$ vs.\ $53.81\%, p_{\mathrm{Holm}}=0.684$), but post-shift active store contamination surges from \textbf{$41.89\%$ to $63.29\%$} ($18.20$ unpurged validated rules) because stale Regime-0 hypotheses accumulate permanently without tombstone quarantine.
@@ -602,12 +605,12 @@ w/o Memory Invalidation & $53.08 \pm 3.44$ & $56.50 \pm 7.57$ & $38.33 \pm 8.81$
 \end{figure*}
 
 % ---------------------------------------------------------------------------
-% 16. COMPUTATIONAL EFFICIENCY ANALYSIS
+% SECTION 13: COMPUTATIONAL EFFICIENCY ANALYSIS
 % ---------------------------------------------------------------------------
 \section{Computational Efficiency and Projected Token Economics}
 Table~\ref{tab:exp6} and Figure~\ref{fig:exp6} strictly separate \textbf{directly measured local CPU/memory telemetry} on our virtualized Intel Xeon @ 2.60\,GHz Linux container from \textbf{analytically projected LLM token and API cost estimates} (modeled at $\$2.50 / \$10.00$ per $10^6$ input/output tokens; $\$0.00$ actual commercial API spend):
 \begin{itemize}
-  \item \textbf{Local CPU Bookkeeping Latency:} EVSA averages \textbf{$0.427 \pm 0.049\text{ ms/task}$} ($279.97\text{ ms}$ total wall time across $480$ training+eval tasks) versus $0.077\text{ ms/task}$ for memoryless \emph{Static}, $0.161\text{ ms/task}$ for \emph{Experience Replay}, and $0.251\text{ ms/task}$ for \emph{Conventional Memory}. In real LLM or tool-execution pipelines ($200\text{--}2{,}000\text{ ms/call}$), $<0.45\text{ ms}$ of Beta/SPRT/CUSUM bookkeeping adds $<0.25\%$ wall-clock latency.
+  \item \textbf{Local CPU Bookkeeping Latency:} EVSA averages \textbf{$0.630 \pm 0.065\text{ ms/task}$} ($414.56\text{ ms}$ total wall time across $480$ training+eval tasks) versus $0.136\text{ ms/task}$ for memoryless \emph{Static}, $0.246\text{ ms/task}$ for \emph{Experience Replay}, and $0.382\text{ ms/task}$ for \emph{Conventional Memory}. In real LLM or tool-execution pipelines ($200\text{--}2{,}000\text{ ms/call}$), $<0.65\text{ ms}$ of Beta/SPRT/CUSUM bookkeeping adds $<0.35\%$ wall-clock latency.
   \item \textbf{Memory Footprint \& Environment Rollouts:} Because Safe LGG consolidates nuisance instances and SPRT rejects flukes, EVSA consumes \textbf{$13.14\text{ KB}$} of persistent memory ($8.1\times$ smaller than Conventional Memory's $106.09\text{ KB}$ and $2.3\times$ smaller than Replay's $29.87\text{ KB}$) and solves the 480 episodes using \textbf{$590.5$ total environment rollouts}—saving $\approx 55\text{--}61$ rollouts compared to baselines ($645.3\text{--}651.4$).
   \item \textbf{Projected Token Efficiency:} Under our serialized prompt-accounting ledger, EVSA requires an estimated $46{,}758$ tokens ($\$0.213$ projected cost—lowest among all five agents), achieving \textbf{$0.117$ held-out SR points per $10\text{k}$ estimated tokens} ($1.83\times$ Static and $4.68\times$ Reflection).
 \end{itemize}
@@ -621,12 +624,12 @@ Table~\ref{tab:exp6} and Figure~\ref{fig:exp6} strictly separate \textbf{directl
 \toprule
 \textbf{Agent Architecture} & \textbf{Eval SR (\%)} & \textbf{Measured CPU (\text{ms/task})} & \textbf{Env.\ Rollouts} & \textbf{Memory (KB)} & \textbf{Est.\ Tokens$^\dagger$} & \textbf{Est.\ Cost (USD)$^\dagger$} & \textbf{SR / 10k Est.\ Tok$^\dagger$} \\
 \midrule
-Baseline A: Static & $26.48$ & $0.077 \pm 0.012$ & $647.8 \pm 8.2$ & $0.00$ & $41{,}120$ & $\$0.218$ & $0.064$ \\
-Baseline B: Conventional Memory & $29.62$ & $0.251 \pm 0.021$ & $645.3 \pm 7.3$ & $106.09$ & $52{,}865$ & $\$0.247$ & $0.056$ \\
-Baseline C: Reflection & $25.65$ & $0.137 \pm 0.008$ & $651.4 \pm 6.7$ & $10.62$ & $103{,}686$ & $\$0.464$ & $0.025$ \\
-Baseline D: Experience Replay & $27.58$ & $0.161 \pm 0.017$ & $648.3 \pm 9.6$ & $29.87$ & $57{,}710$ & $\$0.271$ & $0.048$ \\
+Baseline A: Static & $26.48$ & $0.136 \pm 0.020$ & $647.8 \pm 8.2$ & $0.00$ & $41{,}120$ & $\$0.218$ & $0.064$ \\
+Baseline B: Conventional Memory & $29.62$ & $0.382 \pm 0.022$ & $645.3 \pm 7.3$ & $106.09$ & $52{,}865$ & $\$0.247$ & $0.056$ \\
+Baseline C: Reflection & $25.65$ & $0.213 \pm 0.023$ & $651.4 \pm 6.7$ & $10.62$ & $103{,}686$ & $\$0.464$ & $0.025$ \\
+Baseline D: Experience Replay & $27.58$ & $0.246 \pm 0.010$ & $648.3 \pm 9.6$ & $29.87$ & $57{,}710$ & $\$0.271$ & $0.048$ \\
 \midrule
-\textbf{Proposed Agent E: EVSA} & $\mathbf{54.50}$ & $0.427 \pm 0.049$ & $\mathbf{590.5 \pm 12.3}$ & $13.14$ & $46{,}758$ & $\mathbf{\$0.213}$ & $\mathbf{0.117}$ \\
+\textbf{Proposed Agent E: EVSA} & $\mathbf{54.50}$ & $0.630 \pm 0.065$ & $\mathbf{590.5 \pm 12.3}$ & $13.14$ & $46{,}758$ & $\mathbf{\$0.213}$ & $\mathbf{0.117}$ \\
 \bottomrule
 \multicolumn{8}{l}{\footnotesize $^\dagger$Token counts and USD costs are analytical projections under a serialized prompt-accounting ledger, not live LLM API billings.}
 \end{tabular}}
@@ -640,42 +643,42 @@ Baseline D: Experience Replay & $27.58$ & $0.161 \pm 0.017$ & $648.3 \pm 9.6$ & 
 \end{figure*}
 
 % ---------------------------------------------------------------------------
-% 17. DISCUSSION
+% SECTION 14: DISCUSSION
 % ---------------------------------------------------------------------------
 \section{Discussion}
 \paragraph{Why Unvalidated Experiential Memory Causes Negative Transfer.}
 Experiments 1--4 demonstrate empirically that storing past trajectories without precondition gating or statistical validation frequently degrades accuracy \emph{below} memoryless zero-shot reasoning ($12.12\%\text{--}17.31\%$ vs.\ $17.94\%$ on $c=7$ in Exp 1; $24.01\%\text{--}26.51\%$ vs.\ $29.27\%$ in Exp 2 Block 1). Consistent with the ``experience-following'' bias documented in LLM agents by Xiong et al.\ \cite{xiong2026memory}, surface-retrieved exemplars override exploratory reasoning whenever surface topics collide across distinct latent constraints.
 
 \paragraph{Separating Epistemic Selection from Procedural Compilation.}
-Our Execution-Channel Fairness Parity experiment (Table~\ref{tab:fairness}) provides a clean causal decomposition: $\sim 82\%$ ($+22.04\text{ pp}$) of EVSA's gain over Experience Replay comes from selecting \emph{statistically verified, precondition-compatible} strategies, while $\sim 18\%$ ($+4.88\text{ pp}$) comes from deterministic macro compilation. Crucially, deterministic execution \emph{hurts} zero-shot compositional tasks when paired with unvalidated retrieval (\texttt{Replay Direct Macro} drops to $10.50\%$), proving that rigid procedural compilation is beneficial \emph{only after} epistemic validation and applicability gating.
+Our Execution-Channel Fairness Parity experiment (Table~\ref{tab:fairness}) provides a controlled two-factor attribution: $\sim 82\%$ ($+22.04\text{ pp}$) of EVSA's gain over Experience Replay comes from selecting \emph{statistically verified, precondition-compatible} strategies, while $\sim 18\%$ ($+4.88\text{ pp}$) comes from deterministic macro compilation. Crucially, deterministic execution \emph{hurts} zero-shot compositional tasks when paired with unvalidated retrieval (\texttt{Replay Direct Macro} drops to $10.50\%$), showing that rigid procedural compilation is beneficial \emph{only after} epistemic validation and applicability gating.
 
 \paragraph{Sample-Complexity vs.\ Epistemic-Purity Trade-Offs.}
 Comparing Experiments 2, 4, and 5 reveals a fundamental statistical trade-off: requiring $n_{\min}=3$ verification trials plus a confirming re-validation trial upon LGG precondition broadening means each domain-archetype invariant needs $\approx 4\text{--}5$ encounters to reach full generalized \texttt{VALIDATED} coverage. In sparse-visit horizons ($\approx 6.4$ visits/cell in Exp 5), 1-trial promotion achieves comparable raw stream coverage only by accepting a $70.56\%$ false-discovery rate ($42.55$ bloated rules); under sustained continual learning (Exp 2) or persistent evaluator corruption (Exp 4), EVSA's conservative gating prevents runaway store poisoning and enables rapid $+25.5\text{ to }+36.6\text{ pp}$ post-corruption recovery.
 
 % ---------------------------------------------------------------------------
-% 18. LIMITATIONS AND THREATS TO VALIDITY
+% SECTION 15: LIMITATIONS AND THREATS TO VALIDITY
 % ---------------------------------------------------------------------------
 \section{Limitations and Threats to Validity}
 \label{sec:limitations}
 We audit four categories of limitations candidly (documented in full in \texttt{UNRESOLVED\_LIMITATIONS.md}):
 \begin{enumerate}
-  \item \textbf{External Validity (Symbolic-Procedural Simulation vs.\ Live Frontier LLMs):} All experiments use ShiftBench-Sim v1.0 and \texttt{CalibratedSymbolicLLMBackbone} rather than live autoregressive LLM APIs. Real LLM trajectories involve free-form code/text generation, prompt-length degradation, and mid-episode replanning not captured by discrete 4-step workflows. Token and USD figures in Table~\ref{tab:exp6} are analytical projections, not live billing logs.
+  \item \textbf{External Validity (Synthetic Symbolic Simulation vs.\ Live Frontier LLMs):} All experiments use ShiftBench-Sim v1.0—a low-dimensional synthetic symbolic-procedural simulation ($4$-step discrete operator workflows, $20$-dimensional synthetic embeddings, and a heuristic \texttt{CalibratedSymbolicLLMBackbone})—rather than live autoregressive neural LLM APIs over natural language or source code. Real LLM trajectories involve free-form code/text generation, prompt-length degradation, and mid-episode replanning not captured by discrete 4-step workflows. Token and USD figures in Table~\ref{tab:exp6} are analytical projections, not live billing logs.
   \item \textbf{Construct Validity (Observable Binary Preconditions $\psi_t$):} ShiftBench-Sim v1.0 supplies clean 5-bit binary state descriptors $\psi_t$, enabling exact conjunctive matching and Safe LGG. In unstructured natural-language benchmarks (\texttt{WebArena}, \texttt{SWE-bench}), preconditions must be induced via learned classifiers, programmatic assertions, or LLM-synthesized predicates whose extraction errors could weaken $\phi_h(\psi_t)$ gating.
   \item \textbf{Mathematical Validity (Heuristic Sequential Boundaries):} Discounting ($\gamma < 1$), clipping, $n_{\min}=3$, Safe-LGG clamping, and adaptive Bayes-UCB selection invalidate classical Wald SPRT analytical error bounds. While empirical Candidate FPR ($8.08\%\text{--}11.32\%$) closely tracks nominal $\alpha_{\mathrm{FA}}=11\%$ on ShiftBench-Sim, formal finite-sample error control requires anytime-valid $e$-processes \cite{ramdas2023game}.
-  \item \textbf{Non-Additive Parity Ceiling \& Horizon Sparsity:} First-order step-predicate salience lifts zero-shot accuracy on $c=7$ to $31.13\%$ via Steps 0--2 composition but cannot infer the non-linear Step-3 XOR rule ($\psi_0 \oplus \psi_1$) zero-shot, and $n_{\min}=3$ gating delays coverage in ultra-short per-cell horizons ($<6$ visits/archetype).
+  \item \textbf{Non-Additive Parity Ceiling, Post-Shift Discounting \& Horizon Sparsity:} First-order step-predicate salience lifts zero-shot accuracy on $c=7$ to $31.13\%$ via Steps 0--2 composition but cannot infer the non-linear Step-3 XOR rule ($\psi_0 \oplus \psi_1$) zero-shot; unfalsified rules inside alarmed shifted domains undergo conservative $\gamma_{\mathrm{shift}}=0.35$ discounting to \texttt{CANDIDATE}; and $n_{\min}=3$ gating delays coverage in ultra-short per-cell horizons ($<6$ visits/archetype).
 \end{enumerate}
 
 % ---------------------------------------------------------------------------
-% 19. CONCLUSION AND FUTURE WORK
+% SECTION 16: CONCLUSION AND FUTURE WORK
 % ---------------------------------------------------------------------------
 \section{Conclusion and Future Work}
-This study demonstrated that experiential memory in autonomous agents requires explicit statistical hygiene to remain reliable under distribution shift and noisy evaluator feedback. Through \textbf{Evidence-Validated Strategy Adaptation (EVSA)}, we unified sequential log-odds validation, discounted Bayesian lower credible bounds, re-verified Safe LGG precondition gating, and domain-scoped residual CUSUM drift invalidation inside a zero-leakage architecture. Across $>360{,}000$ deterministic episodes on ShiftBench-Sim v1.0, EVSA substantially improves unseen generalization ($54.50\%$), continual learning ($65.21\%$), selective post-shift adaptation ($+20.80\text{ pp}$ gain with $82.21\%$ stationary-domain retention), and post-corruption recovery ($74.90\%\text{--}84.10\%$), while our controlled parity, ablation, and contamination-decomposition audits isolate both its causal drivers and its operational boundaries.
+This study demonstrated that experiential memory in autonomous agents requires explicit statistical hygiene to remain reliable under distribution shift and noisy evaluator feedback. Through \textbf{Evidence-Validated Strategy Adaptation (EVSA)}, we unified sequential log-odds validation, discounted Bayesian lower credible bounds, re-verified Safe LGG precondition gating, and domain-scoped residual CUSUM drift invalidation inside a capability-isolated architecture. Across $>360{,}000$ deterministic simulated episodes in ShiftBench-Sim v1.0, EVSA substantially improves unseen generalization ($54.50\%$), continual learning ($65.21\%$), selective post-shift adaptation ($+20.80\text{ pp}$ gain with $82.21\%$ stationary-domain retention), and post-corruption recovery ($74.90\%\text{--}84.10\%$), while our controlled parity, ablation, multiplicity, and contamination-decomposition audits isolate both its primary algorithmic drivers and its operational boundaries.
 
 \paragraph{Future Research Directions (Distinct from Completed Work).}
 Four concrete extensions remain open for future investigation: (1) integrating EVSA's three-tier statistical controller with live open-weights and frontier LLM agents on \texttt{SWE-bench} and \texttt{WebArena}; (2) replacing discounted Wald heuristics with exact non-asymptotic $e$-processes and test martingales \cite{howard2021time,ramdas2023game} under adaptive bandit stopping; (3) learning Minimum-Description-Length (MDL) programmatic preconditions directly from unstructured tool traces; and (4) evaluating resilience against adaptive adversarial memory-poisoning attacks \cite{chen2024agentpoison,zou2025poisonedrag}.
 
 % ---------------------------------------------------------------------------
-% 20. REFERENCES
+% REFERENCES
 % ---------------------------------------------------------------------------
 \small
 \bibliographystyle{unsrt}
@@ -683,14 +686,14 @@ Four concrete extensions remain open for future investigation: (1) integrating E
 \normalsize
 
 % ---------------------------------------------------------------------------
-% 21. REPRODUCIBILITY, DATA AVAILABILITY, AND GOVERNANCE STATEMENTS
+% SECTION 17: REPRODUCIBILITY, DATA AVAILABILITY, AND GOVERNANCE STATEMENTS
 % ---------------------------------------------------------------------------
 \section{Reproducibility, Data Availability, and Research Governance}
 \paragraph{Code, Raw Data, and Exact Reproduction.}
-The complete modular codebase (\texttt{src/}), JSON configurations (\texttt{config/}, \texttt{experiments/configs/}), 11-test scientific integrity suite (\texttt{tests/test\_evsa\_suite.py}), raw seed-level CSV logs (\texttt{experiments/raw/}), processed summaries (\texttt{experiments/processed/}), 74-test statistical ledger (\texttt{experiments/statistical\_analysis/}), figure generator (\texttt{experiments/generate\_all\_figures.py}), and manuscript sources (\texttt{paper/}) are distributed at the repository root (\texttt{v2.0.0}) under the MIT License. Running \texttt{pytest -v tests/test\_evsa\_suite.py} ($\approx 2.3\text{ s}$) and \texttt{python3 experiments/run\_complete\_suite.py} ($\approx 159.2\text{ s}$ on a 4-vCPU Xeon @ 2.60\,GHz CPU) regenerates all behavioral metrics bit-for-bit across primary seeds \texttt{1001..1020} and stability seeds \texttt{1001..1030}.
+The complete modular codebase (\url{https://github.com/Devparth7-coder/EVSA-Research-Paper}; source modules in \texttt{src/}, manuscript source in \texttt{paper/\allowbreak research\_\allowbreak paper.tex}, 14-test hard-boundary and statistical-ledger suite in \texttt{tests/\allowbreak test\_\allowbreak evsa\_\allowbreak suite.py}, raw seed-level CSV logs in \texttt{experiments/\allowbreak raw/}, 74-test per-family and global-74 statistical ledger in \texttt{experiments/\allowbreak statistical\_\allowbreak analysis/}, seven phase dossiers in \texttt{docs/}, and pinned dependencies in \texttt{requirements.txt}) is distributed at release \texttt{v2.0.1} under the MIT License. Executing \texttt{pytest -v} on \texttt{tests/\allowbreak test\_\allowbreak evsa\_\allowbreak suite.py} and running \texttt{python3} \texttt{experiments/\allowbreak run\_\allowbreak complete\_\allowbreak suite.py} regenerates all behavioral metrics and both per-family and global-74 Holm-adjusted ledgers bit-for-bit across primary seeds \texttt{1001..1020} and stability seeds \texttt{1001..1030}.
 
 \paragraph{Timeline Provenance Statement.}
-While the conceptual research progression spans five logical phases through 7 November 2026 (documented in \texttt{TIMELINE.md}), archival transparency requires noting that this repository is initialized and tagged cleanly as \texttt{v2.0.0} on \textbf{7 November 2026} without fabricated or backdated historical commits; all audited code modules, raw experimental datasets, statistical tests, and compiled manuscripts in this release were executed and verified on \textbf{7 November 2026} (\texttt{experiments/experiment\_manifest.json}).
+While the conceptual research progression is organized into seven logical research phases through 7 November 2026 (documented in \texttt{TIMELINE.md} and \texttt{docs/PHASE\_1\_*.md}--\texttt{PHASE\_7\_*.md}), archival transparency requires noting that the public repository history begins on \textbf{7 November 2026} and is updated directly via release \texttt{v2.0.1} without fabricated or backdated historical commits; all audited code modules, raw experimental datasets, statistical tests, and compiled manuscripts in this release were executed and verified from a clean clone (\texttt{experiments/experiment\_manifest.json}).
 
 \paragraph{Authorship, Institutional Disclaimer, and AI-Assistance Disclosure.}
 This work was conducted independently by \textbf{Dev Parth} as a student researcher affiliated with the Department of Computer Science and Engineering, Madan Mohan Malaviya University of Technology (MMMUT), Gorakhpur, Uttar Pradesh, India. No external grant funding, third-party human-subjects data, or implied official institutional endorsement is claimed. In accordance with publication transparency standards, the author discloses that AI-assisted software engineering and editorial tooling were used to refactor modular Python simulation packages, automate statistical verification scripts, format publication figures/typesetting, and cross-audit mathematical derivations; all experimental protocols, code logic, numerical outputs, and bibliographic citations were programmatically executed and verified directly against workspace artifacts.

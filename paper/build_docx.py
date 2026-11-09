@@ -55,6 +55,7 @@ def clean_latex_text(s: str) -> str:
         r"\,": " ",
         r"\;": " ",
         r"\!": "",
+        r"\-": "",
         r"\allowbreak": "",
         r"---": "—",
         r"--": "–",
@@ -241,13 +242,13 @@ def main() -> None:
                 ["Framework", "Cross-Task Memory", "Multi-Trial Gate", "Reliability Est.", "Preconditions", "Drift Detector", "Quarantine"],
                 [
                     ["ReAct (2023)", "No", "No", "No", "No", "No", "No"],
-                    ["Reflexion / CLIN", "Verbal / Causal Text", "No (1-episode)", "Verbalized only", "Implicit text", "No", "Buffer cap"],
+                    ["Reflexion / CLIN", "Verbal / Abstractions", "No (1-episode)", "Verbalized only", "Implicit text", "No", "Buffer cap"],
                     ["Voyager (2024)", "Code Skills", "1-trial env check", "Binary pass/fail", "Implicit text", "No", "No"],
                     ["ExpeL / AWM", "Insights / Workflows", "Heuristic / LLM", "Empirical freq.", "Prompt sim.", "No", "Rule edit"],
-                    ["CER / ReasoningBank", "Trajectories / Items", "No", "Outcome tag", "Dense embed.", "No", "Top-k dilution"],
-                    ["Dynamic Cheatsheet / A-MEM", "Curated Notes", "LLM-judged edit", "Uncalibrated LLM", "Linked keywords", "No", "Prompt rewrite"],
-                    ["AdaMEM (ICML 2026)", "Episodic / Bank", "Bandit gate on use", "Contextual Thompson", "Context vector", "Passive decay", "Bandit down-weight"],
-                    ["EVSA (Proposed)", "3-Tier Strategies", "Discounted SPRT", "Beta Credible Bound", "Conjunctive + LGG", "Per-Domain CUSUM", "Domain Quarantine"],
+                    ["CER / ReasoningBank (ICLR 2026)", "Trajectories / Strategies", "No (self-judged)", "Self-judged tag", "Dense embed.", "No", "Top-k dilution"],
+                    ["Dynamic Cheatsheet (EACL 2026) / A-MEM", "Curated Notes", "LLM-judged edit", "Uncalibrated LLM", "Linked keywords", "No", "Prompt rewrite"],
+                    ["AdaMEM (ICML 2026)", "Hybrid LT + ST Bank", "LLM synthesis / MFT", "Uncalibrated LLM", "Query / state context", "Short-term refresh", "Summary overwrite"],
+                    ["EVSA (Proposed)", "3-Tier Strategies", "Discounted SPRT", "Beta Credible Bound", "Conjunctive + Safe LGG", "Per-Domain CUSUM", "Evidence Quarantine"],
                 ],
             )
 
@@ -329,16 +330,25 @@ def main() -> None:
         elif "Statistical Analysis" in title:
             import pandas as pd
             df_t = pd.read_csv(ROOT / "experiments" / "statistical_analysis" / "paired_hypothesis_tests_holm.csv")
-            pick_idx = [1, 11, 8, 72, 73, 13, 25, 29, 52, 55, 59, 65, 57, 58]
+            pick_idx = [1, 11, 8, 72, 73, 13, 25, 29, 52, 50, 55, 59, 65, 60, 57, 58]
             sub_t = df_t.iloc[pick_idx]
             add_styled_table(
                 doc,
                 "Table 7: Selected paired statistical tests (N = 20 seeds) with per-family and global-74 Holm-Bonferroni p-values.",
-                ["Family", "Comparator", "Mean Diff", "Cohen's dz", "Per-Fam t_Holm", "Wilcoxon W_Holm", "Global-74 t_Holm", "Decision"],
+                ["Family", "Comparator", "Mean Diff", "Cohen's dz", "Per-Fam t_Holm", "Wilcoxon W_Holm", "Global-74 t_Holm", "Decision (Fam / Glob74)"],
                 [
-                    [str(r["family"]), str(r["comparator"]), f"{r['mean_diff']:+.4f}", f"{r['cohens_dz']:+.2f}",
-                     f"{r['t_pvalue_holm']:.3e}", f"{r['wilcoxon_pvalue_holm']:.3e}",
-                     f"{r['t_pvalue_holm_global74']:.3e}", "Significant" if r["significant_at_05"] else "Non-Sig."]
+                    [
+                        str(r["family"]),
+                        str(r["comparator"]),
+                        f"{r['mean_diff']:+.4f}",
+                        f"{r['cohens_dz']:+.2f}",
+                        f"{r['t_pvalue_holm']:.3e}",
+                        f"{r['wilcoxon_pvalue_holm']:.3e}",
+                        f"{r['t_pvalue_holm_global74']:.3e}",
+                        ("Sig. / Sig." if r["significant_global74_at_05"] else "Sig. / Non-Sig.")
+                        if r["significant_at_05"]
+                        else "Non-Sig. / Non-Sig.",
+                    ]
                     for _, r in sub_t.iterrows()
                 ],
             )

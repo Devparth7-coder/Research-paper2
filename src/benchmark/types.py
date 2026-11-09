@@ -117,9 +117,24 @@ class MemoryEntry:
     reflection_avoid_map: Dict[int, List[int]] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class AgentEpisodeOutcome:
+    """Agent-side episode execution summary containing strictly non-oracle telemetry."""
+
+    best_trial_idx: int
+    trials_used: int
+    strategy_evaluations: int
+    execution_time_ms: float
+    active_memory_items: int
+    memory_bytes: int
+    prompt_tokens: int
+    completion_tokens: int
+    shift_detected: bool = False
+
+
 @dataclass
 class EpisodeTelemetry:
-    """Granular per-episode telemetry assembled post-episode by the benchmark harness."""
+    """Granular per-episode telemetry assembled post-episode strictly by the evaluator harness."""
 
     experiment_name: str
     agent_name: str

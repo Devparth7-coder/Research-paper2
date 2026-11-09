@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Master Reproducible Execution, Recalculation, Sensitivity, and Statistical Pipeline
-for EVSA v2.0.0 (Author: Dev Parth).
+for EVSA v2.0.1 (Author: Dev Parth).
 
 Executes:
 1. Experiments 1--6 across N=20 independent random seeds (1001..1020) from scratch.
@@ -52,6 +52,7 @@ from src.benchmark import (
     TaskInstance,
 )
 from src.evaluation import (
+    apply_global_holm_bonferroni,
     apply_holm_bonferroni,
     audit_evsa_repository,
     compute_accuracy,
@@ -62,6 +63,7 @@ from src.evaluation import (
     count_false_admitted_plans,
     minimum_detectable_dz,
     paired_statistical_comparison,
+    run_audited_episode,
     summarize_seed_distribution,
 )
 
@@ -215,7 +217,7 @@ def evaluate_frozen_agent(
     eval_env = NonStationaryTaskEnvironment(seed=eval_seed, feedback_corruption_rate=0.0)
     if source_env is not None:
         eval_env.copy_metadata_from(source_env)
-    return [agent.run_episode(t, eval_env, experiment_name=exp_name, max_trials=1, learn=False) for t in eval_tasks]
+    return [run_audited_episode(agent, t, eval_env, experiment_name=exp_name, max_trials=1, learn=False) for t in eval_tasks]
 
 
 def run_experiment_1(seeds: Sequence[int], logger: logging.Logger) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -242,7 +244,7 @@ def run_experiment_1(seeds: Sequence[int], logger: logging.Logger) -> Tuple[pd.D
             train_env = NonStationaryTaskEnvironment(seed=seed + 1000)
             train_env.copy_metadata_from(stream_gen)
             t0 = time.perf_counter()
-            train_tels = [agent.run_episode(t, train_env, "exp1_train", max_trials=2, learn=True) for t in train_stream]
+            train_tels = [run_audited_episode(agent, t, train_env, "exp1_train", max_trials=2, learn=True) for t in train_stream]
             train_wall_ms = (time.perf_counter() - t0) * 1000.0
 
             t1 = time.perf_counter()
@@ -339,7 +341,7 @@ def run_experiment_2(seeds: Sequence[int], logger: logging.Logger) -> Tuple[pd.D
             for b in range(1, num_blocks + 1):
                 chunk = learn_tasks[(b - 1) * block_size : b * block_size]
                 for task in chunk:
-                    tel = agent.run_episode(task, train_env, "exp2_learn", max_trials=2, learn=True)
+                    tel = run_audited_episode(agent, task, train_env, "exp2_learn", max_trials=2, learn=True)
                     stationary_alarms += int(tel.shift_detected)
                 probe_tels = evaluate_frozen_agent(
                     agent, probe_tasks, seed + 5000 + b, f"exp2_probe_{b}", source_env=stream_gen
@@ -428,7 +430,7 @@ def run_experiment_3(
             for idx, task in enumerate(full_stream):
                 if idx == T1 and isinstance(agent, EVSAAgent):
                     pre_shift_validated_ids = {r.strategy_id for r in agent.repo.validated_strategies()}
-                tel = agent.run_episode(task, run_env, "exp3_shift", max_trials=2, learn=True)
+                tel = run_audited_episode(agent, task, run_env, "exp3_shift", max_trials=2, learn=True)
                 ep_tels.append(tel)
 
                 if isinstance(agent, EVSAAgent):
@@ -558,19 +560,22 @@ def run_experiment_4(seeds: Sequence[int], logger: logging.Logger) -> pd.DataFra
                 clean_env = NonStationaryTaskEnvironment(seed=seed + 8000, feedback_corruption_rate=0.0)
                 clean_env.copy_metadata_from(gen)
 
-                orig_eval = noisy_env.evaluate_plan
                 rollout_audit: List[Tuple[bool, int]] = []
 
-                def tracked_eval(task_obj, plan_tuple, corruption_override=None):
-                    res = orig_eval(task_obj, plan_tuple, corruption_override=corruption_override)
+                def observe_rollout(task_obj: TaskInstance, plan_tuple: Tuple[int, ...], res_obj) -> None:
                     _, _, opt_p = gen.get_task_oracle(task_obj.task_id)
-                    rollout_audit.append((plan_tuple == opt_p, res.observed_success))
-                    return res
-
-                noisy_env.evaluate_plan = tracked_eval  # type: ignore[assignment]
+                    rollout_audit.append((plan_tuple == opt_p, res_obj.observed_success))
 
                 noisy_tels = [
-                    agent.run_episode(task, noisy_env, f"exp4_eta_{eta}", max_trials=2, learn=True)
+                    run_audited_episode(
+                        agent,
+                        task,
+                        noisy_env,
+                        f"exp4_eta_{eta}",
+                        max_trials=2,
+                        learn=True,
+                        rollout_observer=observe_rollout,
+                    )
                     for task in combined_stream[:200]
                 ]
                 contam_at_200 = noisy_tels[-1].contaminated_active_ratio
@@ -629,7 +634,7 @@ def run_experiment_4(seeds: Sequence[int], logger: logging.Logger) -> pd.DataFra
                     far, cand_fpr, frr = 0.0, 0.0, 0.0
 
                 rec_tels = [
-                    agent.run_episode(task, clean_env, f"exp4_rec_{eta}", max_trials=2, learn=True)
+                    run_audited_episode(agent, task, clean_env, f"exp4_rec_{eta}", max_trials=2, learn=True)
                     for task in combined_stream[200:]
                 ]
                 rows.append({
@@ -680,7 +685,14 @@ def run_experiment_5(seeds: Sequence[int], logger: logging.Logger) -> pd.DataFra
             env_shift = NonStationaryTaskEnvironment(seed=seed + 9200, feedback_corruption_rate=0.0)
             env_shift.copy_metadata_from(gen)
             tels = [
-                variant.run_episode(task, env_noisy if idx < 180 else env_shift, "exp5_ablation", max_trials=2, learn=True)
+                run_audited_episode(
+                    variant,
+                    task,
+                    env_noisy if idx < 180 else env_shift,
+                    "exp5_ablation",
+                    max_trials=2,
+                    learn=True,
+                )
                 for idx, task in enumerate(stream)
             ]
             eval_tels = evaluate_frozen_agent(variant, unseen_eval, seed + 9300, "exp5_eval", source_env=gen)
@@ -735,7 +747,7 @@ def run_fairness_and_seed_sensitivity(logger: logging.Logger) -> Tuple[pd.DataFr
             tr_env = NonStationaryTaskEnvironment(seed=seed + 1000)
             tr_env.copy_metadata_from(gen)
             for t in train_s:
-                ag.run_episode(t, tr_env, "fair_tr", max_trials=2, learn=True)
+                run_audited_episode(ag, t, tr_env, "fair_tr", max_trials=2, learn=True)
             ev_i = evaluate_frozen_agent(ag, eval_i, seed + 2000, "fair_ev_i", source_env=gen)
             ev_c = evaluate_frozen_agent(ag, eval_c, seed + 3000, "fair_ev_c", source_env=gen)
             all_ev = ev_i + ev_c
@@ -812,10 +824,11 @@ def export_markdown_summary_tables(tbl_dir: Path) -> None:
         ], None),
         ("table_statistical_tests_all.csv", [
             "proposed", "comparator", "proposed_mean", "comparator_mean",
-            "cohens_dz", "family", "metric", "t_pvalue_holm", "significant_at_05",
+            "cohens_dz", "family", "metric", "t_pvalue_holm",
+            "t_pvalue_holm_global74", "significant_at_05", "significant_global74_at_05",
         ], None),
     ]
-    md_parts = ["# EVSA v2.0.0 Verified Publication Tables (Recalculated from Raw Seed Data)\n"]
+    md_parts = [f"# EVSA v{evsa_pkg.__version__} Verified Publication Tables (Recalculated from Raw Seed Data)\n"]
     for csv_name, cols, max_rows in specs:
         df_c = pd.read_csv(tbl_dir / csv_name)[cols]
         if max_rows is not None:
@@ -1034,6 +1047,9 @@ def main() -> None:
     ])
     all_tests.extend(fair_tests)
 
+    # Reproducible simultaneous global-74 Holm-Bonferroni adjustment across all pooled tests
+    all_tests = apply_global_holm_bonferroni(all_tests, alpha=0.05)
+
     df_tests = pd.DataFrame(all_tests)
     stat_dir = exp_dir / "statistical_analysis"
     df_tests.to_csv(stat_dir / "paired_hypothesis_tests_holm.csv", index=False)
@@ -1077,10 +1093,21 @@ def main() -> None:
         "exp6": s6.to_dict(orient="records"),
         "fairness_parity": s_fair.to_dict(orient="records"),
         "num_hypothesis_tests": len(df_tests),
+        "num_significant_per_family_05": int(df_tests["significant_at_05"].sum()),
+        "num_significant_t_holm_05": int(df_tests["t_significant_holm"].sum()),
+        "num_significant_t_global74_05": int(df_tests["t_significant_holm_global74"].sum()),
+        "num_significant_primary_global74_05": int(df_tests["significant_global74_at_05"].sum()),
     }
     (stat_dir / "statistical_digest.json").write_text(json.dumps(digest, indent=2))
     (exp_dir / "experiment_manifest.json").write_text(json.dumps(digest["manifest"], indent=2))
-    logger.info("Complete EVSA v2.0.0 suite finished in %.2f seconds (%d tests).", elapsed, len(df_tests))
+    logger.info(
+        "Complete EVSA v%s suite finished in %.2f seconds (%d tests; %d per-family sig, %d global-74 t-sig).",
+        evsa_pkg.__version__,
+        elapsed,
+        len(df_tests),
+        int(df_tests["significant_at_05"].sum()),
+        int(df_tests["t_significant_holm_global74"].sum()),
+    )
 
 
 if __name__ == "__main__":

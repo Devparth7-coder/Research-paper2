@@ -1,0 +1,34 @@
+# Python bytecode & test caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments & local tool caches
+.venv/
+venv/
+env/
+.cache/
+.config/
+.local/
+.npm/
+.arena/
+
+# LaTeX intermediate build artifacts (keep .tex, .bib, .pdf)
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+
+# OS metadata
+.DS_Store
+Thumbs.db

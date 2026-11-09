@@ -1,12 +1,15 @@
-"""Comprehensive unit and scientific integrity test suite for EVSA v2.0.0."""
+"""Comprehensive unit, hard-interface-boundary, and scientific integrity test suite for EVSA v2.0.1."""
 
 from __future__ import annotations
 
 from dataclasses import fields, replace
 import inspect
+import re
 import sys
 from pathlib import Path
 import numpy as np
+import pandas as pd
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -15,6 +18,7 @@ if str(ROOT) not in sys.path:
 import src.agents.baselines as baselines_mod
 import src.agents.evsa_agent as evsa_agent_mod
 import src.agents.experimentation as exp_mod
+import src.benchmark.agent_interface as iface_mod
 import src.benchmark.llm_backbone as backbone_mod
 import src.drift_detection.cusum_detector as cusum_mod
 import src.memory.hypothesis_generator as hyp_mod
@@ -33,6 +37,8 @@ from src.agents import (
     StaticAgent,
 )
 from src.benchmark import (
+    AgentEpisodeOutcome,
+    AgentEnvironmentInterface,
     CalibratedSymbolicLLMBackbone,
     NonStationaryTaskEnvironment,
     RolloutResult,
@@ -42,22 +48,25 @@ from src.benchmark import (
 )
 from src.drift_detection import DistributionShiftDetector
 from src.evaluation import (
+    apply_global_holm_bonferroni,
     apply_holm_bonferroni,
     audit_evsa_repository,
     compute_accuracy,
     compute_paired_power,
     minimum_detectable_dz,
     paired_statistical_comparison,
+    run_audited_episode,
 )
 from src.memory import AdaptiveMemoryManager, HypothesisGenerator, StrategyRepository
 from src.retrieval import StrategyRetriever
 from src.validation import ConfidenceEstimator, EvidenceValidationEngine
 
 
-def test_task_and_rollout_have_zero_oracle_fields() -> None:
-    """Issue 1: TaskInstance and RolloutResult must expose zero oracle/ground-truth attributes."""
+def test_task_rollout_and_agent_outcome_have_zero_oracle_fields() -> None:
+    """TaskInstance, RolloutResult, and AgentEpisodeOutcome must expose zero oracle fields."""
     task_field_names = {f.name for f in fields(TaskInstance)}
     rollout_field_names = {f.name for f in fields(RolloutResult)}
+    outcome_field_names = {f.name for f in fields(AgentEpisodeOutcome)}
     forbidden = {
         "optimal_plan",
         "governing_archetype",
@@ -67,14 +76,54 @@ def test_task_and_rollout_have_zero_oracle_fields() -> None:
         "step_matches",
         "alignment_score",
         "feedback_corrupted",
+        "contaminated_active_ratio",
     }
     assert task_field_names.isdisjoint(forbidden)
     assert rollout_field_names.isdisjoint(forbidden)
+    assert outcome_field_names.isdisjoint(forbidden)
+
+
+def test_hard_interface_boundary_separates_agent_from_oracle() -> None:
+    """Step 2: Agents must reject raw oracle environments and AgentEnvironmentInterface hides oracle state."""
+    oracle_env = NonStationaryTaskEnvironment(seed=1001, feedback_corruption_rate=0.25)
+    task = oracle_env.sample_task_stream(1, stream_seed=42)[0]
+    agent_iface = oracle_env.make_agent_interface()
+
+    # 1. AgentEnvironmentInterface has no __dict__ and exposes zero oracle attributes
+    assert not hasattr(agent_iface, "__dict__")
+    for hidden_attr in (
+        "regime_tables",
+        "_task_meta",
+        "_rollout_audit_log",
+        "get_optimal_plan",
+        "get_task_oracle",
+        "resolve_oracle_for_task",
+        "feedback_corruption_rate",
+        "finalize_episode_telemetry",
+        "pop_episode_audits",
+    ):
+        assert not hasattr(agent_iface, hidden_attr), f"Interface leaked {hidden_attr}"
+
+    # 2. Every agent class strictly rejects a raw NonStationaryTaskEnvironment with TypeError
+    for ag in (
+        StaticAgent(seed=1),
+        ConventionalMemoryAgent(seed=1),
+        ReflectionAgent(seed=1),
+        ExperienceReplayAgent(seed=1),
+        EVSAAgent(seed=1),
+    ):
+        with pytest.raises(TypeError, match="Hard oracle boundary violation"):
+            ag.act_on_episode(task, oracle_env)  # type: ignore[arg-type]
+
+        # Valid AgentEnvironmentInterface succeeds and returns AgentEpisodeOutcome
+        out = ag.act_on_episode(task, agent_iface, max_trials=1, learn=False)
+        assert isinstance(out, AgentEpisodeOutcome)
 
 
 def test_zero_oracle_leakage_across_all_agent_and_backbone_modules() -> None:
-    """Issue 1: Verify zero oracle identifiers appear anywhere in agent/memory/backbone code."""
+    """Verify zero oracle classes or attributes appear in any agent, memory, or backbone code."""
     audited_modules = (
+        iface_mod,
         backbone_mod,
         conf_mod,
         sprt_mod,
@@ -88,6 +137,9 @@ def test_zero_oracle_leakage_across_all_agent_and_backbone_modules() -> None:
         evsa_agent_mod,
     )
     forbidden_tokens = (
+        "NonStationaryTaskEnvironment",
+        "EpisodeTelemetry",
+        "AuditOutcome",
         "optimal_plan",
         "governing_archetype",
         "regime_id",
@@ -97,18 +149,19 @@ def test_zero_oracle_leakage_across_all_agent_and_backbone_modules() -> None:
         "get_task_oracle",
     )
     for mod in audited_modules:
-        # Check executable statements (excluding module docstrings)
-        lines = [
-            ln for ln in inspect.getsource(mod).splitlines()
-            if not ln.strip().startswith("#")
-        ]
+        src_txt = inspect.getsource(mod)
+        # Strip module-level docstring before scanning executable code
+        tree_doc = mod.__doc__ or ""
+        if tree_doc:
+            src_txt = src_txt.replace(tree_doc, "", 1)
+        lines = [ln for ln in src_txt.splitlines() if not ln.strip().startswith("#")]
         joined = "\n".join(lines)
         for tok in forbidden_tokens:
             assert tok not in joined, f"Forbidden token {tok!r} found in {mod.__name__}"
 
 
 def test_backbone_does_not_know_latent_xor_parity() -> None:
-    """Issue 1: Zero-shot backbone uses linear inclusive-OR heuristic and does not know XOR on c=7."""
+    """Zero-shot backbone uses linear inclusive-OR heuristic and does not know XOR on c=7."""
     env = NonStationaryTaskEnvironment(seed=1001)
     t_arch7 = env.sample_task_stream(1, allowed_archetypes=[7], stream_seed=77)[0]
     assert t_arch7.structural_predicates[:3] == (1, 1, 1)
@@ -116,7 +169,6 @@ def test_backbone_does_not_know_latent_xor_parity() -> None:
 
     bb = CalibratedSymbolicLLMBackbone(seed=42, base_step_competence=0.67)
     step3_probs = bb._base_step_probs(t_arch7, 3)
-    # On c=7 (p0=1, p1=1), true XOR is 0 whereas linear inclusive-OR puts prior mass on 1
     assert int(np.argmax(step3_probs)) != opt_arch7[3]
 
 
@@ -139,7 +191,7 @@ def test_environment_determinism_and_regime_invariance() -> None:
 
 
 def test_confidence_estimator_bayesian_vs_empirical_ablation() -> None:
-    """Issue 2: Disabled ConfidenceEstimator must return raw empirical mean, NOT constant 0.75."""
+    """Disabled ConfidenceEstimator must return raw empirical mean, NOT constant 0.75."""
     est_bayes = ConfidenceEstimator(credible_delta=0.10, gamma_base=1.0, enabled=True)
     est_emp = ConfidenceEstimator(credible_delta=0.10, gamma_base=1.0, enabled=False)
 
@@ -150,11 +202,9 @@ def test_confidence_estimator_bayesian_vs_empirical_ablation() -> None:
         embedding=np.ones(20) / np.sqrt(20),
         operator_plan=(0, 1, 2, 0),
     )
-    # Untested record -> 0.50 empirical prior
     assert np.isclose(est_emp.posterior_mean(rec), 0.50)
     assert np.isclose(est_emp.lower_credible_bound(rec), 0.50)
 
-    # 1 success, 3 failures -> raw empirical frequency = 0.25 (NOT 0.75!)
     est_emp.update_posterior(rec, 1, 1)
     for ep in (2, 3, 4):
         est_emp.update_posterior(rec, 0, ep)
@@ -162,7 +212,6 @@ def test_confidence_estimator_bayesian_vs_empirical_ablation() -> None:
     assert np.isclose(est_emp.lower_credible_bound(rec), 0.25)
     assert np.isclose(est_emp.upper_credible_bound(rec), 0.25)
 
-    # Bayesian estimator produces strict credible interval lcb < mean < ucb
     rec_b = StrategyRecord(
         strategy_id="s1b",
         domain="api_orchestration",
@@ -201,7 +250,7 @@ def test_discounted_sprt_promotion_and_quarantine_gates() -> None:
 
 
 def test_safe_lgg_generalization_and_revalidation() -> None:
-    """Issue 4: Broadening a VALIDATED rule via LGG requires 1 confirming trial before re-promotion."""
+    """Broadening a VALIDATED rule via LGG requires 1 confirming trial before re-promotion."""
     env = NonStationaryTaskEnvironment(seed=42)
     tasks = env.sample_task_stream(2, allowed_archetypes=[0], stream_seed=11)
     t1 = tasks[0]
@@ -216,33 +265,29 @@ def test_safe_lgg_generalization_and_revalidation() -> None:
     p1 = tuple((i, b) for i, b in enumerate(t1.structural_predicates))
     p2 = tuple((i, b) for i, b in enumerate(t2.structural_predicates))
 
-    # 3 consecutive successes on p1 promote record to VALIDATED
     for ep in range(3):
         rec = mgr.admit_or_merge_candidate(repo, t1, p1, opt1, 1, ep, val)
     assert rec.status == StrategyStatus.VALIDATED
     assert len(rec.preconditions) == 5
 
-    # Merging with t2 broadens preconditions to 4 literals and steps back to CANDIDATE for re-verification
     merged = mgr.admit_or_merge_candidate(repo, t2, p2, opt1, 1, 3, val)
     assert len(merged.preconditions) == 4
     assert repo.lgg_merges == 1
     assert repo.lgg_revalidations_triggered == 1
     assert merged.status == StrategyStatus.CANDIDATE
 
-    # One confirming trial on the broadened rule restores VALIDATED status
     est.update_posterior(merged, 1, 4)
     assert val.step_evidence(merged, 1, est, 4) == StrategyStatus.VALIDATED
 
 
 def test_retriever_tau_rel_gate_and_frozen_eval_validated_only() -> None:
-    """Issue 4: Retriever excludes VALIDATED with LCB < tau_rel, and learn=False skips CANDIDATEs."""
+    """Retriever excludes VALIDATED with LCB < tau_rel, and learn=False skips CANDIDATEs."""
     est = ConfidenceEstimator()
     ret = StrategyRetriever(est, use_applicability=True, tau_rel=0.45)
     repo = StrategyRepository()
     emb = np.zeros(20)
     emb[0] = 1.0
 
-    # Weak VALIDATED strategy with LCB < 0.45 (alpha=2, beta=3 -> LCB_0.10 = 0.14 < 0.45)
     rec_weak_val = StrategyRecord(
         strategy_id="weak_val",
         domain="system_diagnosis",
@@ -253,7 +298,6 @@ def test_retriever_tau_rel_gate_and_frozen_eval_validated_only() -> None:
         beta=3.0,
         status=StrategyStatus.VALIDATED,
     )
-    # Candidate strategy matching same predicates
     rec_cand = StrategyRecord(
         strategy_id="cand_1",
         domain="system_diagnosis",
@@ -272,7 +316,7 @@ def test_retriever_tau_rel_gate_and_frozen_eval_validated_only() -> None:
     task = replace(task, domain="system_diagnosis", query_embedding=emb.copy())
 
     vals, cands, _ = ret.retrieve(repo, task)
-    assert len(vals) == 0  # Excluded by LCB < tau_rel!
+    assert len(vals) == 0
     assert len(cands) == 1
 
     exp = ExperimentationEngine()
@@ -284,7 +328,7 @@ def test_retriever_tau_rel_gate_and_frozen_eval_validated_only() -> None:
 
 
 def test_cusum_cooldown_and_selective_shift_quarantine() -> None:
-    """Issue 3: CUSUM enforces warmup + cooldown, and shift quarantine uses failure/LCB evidence (not age)."""
+    """CUSUM enforces warmup + cooldown, and shift quarantine uses failure/LCB evidence."""
     det = DistributionShiftDetector(
         slack_nu=0.12, drift_threshold=1.45, min_obs_since_reset=3, cooldown_episodes=12
     )
@@ -296,11 +340,9 @@ def test_cusum_cooldown_and_selective_shift_quarantine() -> None:
     assert fired_ep is not None and fired_ep >= 2
     assert det.cusum_stat.get("resource_planning", 0.0) == 0.0
 
-    # Immediate subsequent failures inside cooldown window must NOT fire a duplicate alarm
     for ep in range(fired_ep + 1, fired_ep + 6):
         assert det.update("api_orchestration", 0.88, 0, ep) is False
 
-    # Verify selective shift quarantine quarantines failing record regardless of young age (created_episode=99)
     est = ConfidenceEstimator()
     mgr = AdaptiveMemoryManager(est, tau_quarantine_shift=0.58)
     repo = StrategyRepository()
@@ -332,7 +374,7 @@ def test_cusum_cooldown_and_selective_shift_quarantine() -> None:
     repo.add(unfalsified_old)
     mgr.apply_domain_shift_discount(repo, "api_orchestration", gamma_shift=0.35, tau_lcb=0.48, episode_idx=100)
     assert failing_young.status == StrategyStatus.QUARANTINED
-    assert unfalsified_old.status == StrategyStatus.CANDIDATE  # Demoted for re-verification, NOT blindly wiped by age!
+    assert unfalsified_old.status == StrategyStatus.CANDIDATE
 
 
 def test_budget_parity_and_contamination_audit() -> None:
@@ -350,9 +392,9 @@ def test_budget_parity_and_contamination_audit() -> None:
         run_env = NonStationaryTaskEnvironment(seed=303)
         run_env.copy_metadata_from(env)
         for t in tasks:
-            tel_tr = ag.run_episode(t, run_env, "test_tr", max_trials=2, learn=True)
+            tel_tr = run_audited_episode(ag, t, run_env, "test_tr", max_trials=2, learn=True)
             assert 1 <= tel_tr.trials_used <= 2
-            tel_ev = ag.run_episode(t, run_env, "test_ev", max_trials=1, learn=False)
+            tel_ev = run_audited_episode(ag, t, run_env, "test_ev", max_trials=1, learn=False)
             assert tel_ev.trials_used == 1
         if isinstance(ag, EVSAAgent):
             bd = audit_evsa_repository(ag.repo, env, current_regime=0)
@@ -370,3 +412,67 @@ def test_statistical_power_and_holm_bonferroni() -> None:
     adj = apply_holm_bonferroni([comp], alpha=0.05)
     assert adj[0]["significant_at_05"] is True
     assert compute_accuracy([1, 1, 0, 1]) == 0.75
+
+
+def test_reproducible_global74_holm_ledger() -> None:
+    """Step 1: Verify paired_hypothesis_tests_holm.csv has reproducible global-74 Holm columns."""
+    ledger_path = ROOT / "experiments" / "statistical_analysis" / "paired_hypothesis_tests_holm.csv"
+    table_path = ROOT / "tables" / "table_statistical_tests_all.csv"
+    assert ledger_path.exists() and table_path.exists()
+
+    df = pd.read_csv(ledger_path)
+    df_tbl = pd.read_csv(table_path)
+    assert len(df) == 74
+    required_cols = {
+        "t_pvalue_holm_global74",
+        "t_significant_holm_global74",
+        "wilcoxon_pvalue_holm_global74",
+        "wilcoxon_significant_holm_global74",
+        "primary_pvalue_holm_global74",
+        "significant_global74_at_05",
+    }
+    assert required_cols.issubset(df.columns)
+    assert required_cols.issubset(df_tbl.columns)
+
+    recomputed = pd.DataFrame(apply_global_holm_bonferroni(df.to_dict(orient="records"), alpha=0.05))
+    assert np.allclose(df["t_pvalue_holm_global74"], recomputed["t_pvalue_holm_global74"], atol=1e-15)
+    assert np.allclose(df["wilcoxon_pvalue_holm_global74"], recomputed["wilcoxon_pvalue_holm_global74"], atol=1e-15)
+    assert (df["significant_global74_at_05"] == recomputed["significant_global74_at_05"]).all()
+
+
+def test_documentation_references_exact_source_symbols() -> None:
+    """Steps 3, 6 & 7: Verify docs, phase dossiers, pinned deps, .gitignore, and CI workflow."""
+    known_tests = {name for name in globals() if name.startswith("test_")}
+    doc_paths = [
+        ROOT / "FINAL_AUDIT_REPORT.md",
+        ROOT / "REPRODUCIBILITY.md",
+        ROOT / "README.md",
+        ROOT / "TIMELINE.md",
+        *(ROOT / "docs" / f"PHASE_{i}_{suffix}.md" for i, suffix in (
+            (1, "PROBLEM_AND_THEORY"),
+            (2, "ARCHITECTURE_AND_ALGORITHMS"),
+            (3, "BENCHMARK_AND_BASELINES"),
+            (4, "EXPERIMENTS_AND_ABLATIONS"),
+            (5, "STATISTICAL_ANALYSIS_AND_POWER"),
+            (6, "EFFICIENCY_AND_FAIRNESS_AUDIT"),
+            (7, "MANUSCRIPT_AND_RELEASE_AUDIT"),
+        )),
+    ]
+    for doc_path in doc_paths:
+        assert doc_path.exists(), f"Missing documentation file {doc_path}"
+        txt = doc_path.read_text()
+        assert "21-section" not in txt, f"Stale section count in {doc_path.name}"
+        for rel_src in re.findall(r"`(src/[A-Za-z0-9_./]+\.py)`", txt):
+            assert (ROOT / rel_src).exists(), f"{doc_path.name} references missing file {rel_src}"
+        for tname in re.findall(r"`(test_[A-Za-z0-9_]+)`", txt):
+            if tname != "test_":
+                assert tname in known_tests, f"{doc_path.name} references missing test {tname}"
+
+    assert (ROOT / ".gitignore").exists()
+    assert (ROOT / ".github" / "workflows" / "ci.yml").exists()
+    req_lines = [
+        ln.strip() for ln in (ROOT / "requirements.txt").read_text().splitlines()
+        if ln.strip() and not ln.strip().startswith("#")
+    ]
+    assert len(req_lines) >= 6
+    assert all("==" in ln for ln in req_lines), "All requirements.txt entries must be version-pinned with =="

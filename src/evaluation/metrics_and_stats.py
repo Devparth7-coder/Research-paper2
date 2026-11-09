@@ -234,3 +234,35 @@ def apply_holm_bonferroni(comparisons: List[Dict[str, Any]], alpha: float = 0.05
         row["significant_at_05"] = row["wilcoxon_significant_holm"] if use_nonparam else row["t_significant_holm"]
         enriched.append(row)
     return enriched
+
+
+def apply_global_holm_bonferroni(comparisons: List[Dict[str, Any]], alpha: float = 0.05) -> List[Dict[str, Any]]:
+    """
+    Simultaneous global Holm-Bonferroni adjustment across ALL pooled hypothesis tests
+    (e.g., all M = 74 comparisons across the entire study), complementing per-family
+    Holm-Bonferroni columns.
+    """
+    if not comparisons:
+        return comparisons
+    t_pvals = [c["t_pvalue"] for c in comparisons]
+    w_pvals = [c["wilcoxon_pvalue"] for c in comparisons]
+
+    t_rej_g, t_adj_g = _holm_adjust(t_pvals, alpha=alpha)
+    w_rej_g, w_adj_g = _holm_adjust(w_pvals, alpha=alpha)
+
+    enriched: List[Dict[str, Any]] = []
+    for idx, comp in enumerate(comparisons):
+        row = dict(comp)
+        row["t_pvalue_holm_global74"] = float(t_adj_g[idx])
+        row["t_significant_holm_global74"] = bool(t_rej_g[idx])
+        row["wilcoxon_pvalue_holm_global74"] = float(w_adj_g[idx])
+        row["wilcoxon_significant_holm_global74"] = bool(w_rej_g[idx])
+        use_nonparam = row["shapiro_p"] < 0.05
+        row["primary_pvalue_holm_global74"] = (
+            row["wilcoxon_pvalue_holm_global74"] if use_nonparam else row["t_pvalue_holm_global74"]
+        )
+        row["significant_global74_at_05"] = (
+            row["wilcoxon_significant_holm_global74"] if use_nonparam else row["t_significant_holm_global74"]
+        )
+        enriched.append(row)
+    return enriched

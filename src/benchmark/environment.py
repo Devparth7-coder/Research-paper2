@@ -18,6 +18,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Sequence, Tuple
 import numpy as np
 
+from .agent_interface import AgentEnvironmentInterface
 from .types import (
     AuditOutcome,
     EpisodeTelemetry,
@@ -155,6 +156,24 @@ class NonStationaryTaskEnvironment:
         out = list(self._rollout_audit_log)
         self._rollout_audit_log.clear()
         return out
+
+    def make_agent_interface(
+        self,
+        corruption_override: Optional[float] = None,
+        rollout_observer=None,
+    ) -> AgentEnvironmentInterface:
+        """
+        Construct a capability-isolated `AgentEnvironmentInterface` handle that exposes
+        ONLY `evaluate_plan(task, plan) -> RolloutResult` to agents without exposing
+        `self` or any evaluator-only oracle methods/tables.
+        """
+        def _step(task_obj: TaskInstance, plan_tuple: Tuple[int, ...]) -> RolloutResult:
+            res = self.evaluate_plan(task_obj, plan_tuple, corruption_override=corruption_override)
+            if rollout_observer is not None:
+                rollout_observer(task_obj, plan_tuple, res)
+            return res
+
+        return AgentEnvironmentInterface(_step)
 
     def _make_query_embedding(
         self,

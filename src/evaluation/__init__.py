@@ -2,8 +2,10 @@ from .audit import (
     audit_evsa_repository,
     count_false_admitted_plans,
     is_record_optimal_at_creation,
+    run_audited_episode,
 )
 from .metrics_and_stats import (
+    apply_global_holm_bonferroni,
     apply_holm_bonferroni,
     compute_accuracy,
     compute_adaptation_gain,
@@ -19,6 +21,8 @@ __all__ = [
     "audit_evsa_repository",
     "count_false_admitted_plans",
     "is_record_optimal_at_creation",
+    "run_audited_episode",
+    "apply_global_holm_bonferroni",
     "apply_holm_bonferroni",
     "compute_accuracy",
     "compute_adaptation_gain",

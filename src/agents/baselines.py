@@ -24,9 +24,17 @@ import time
 from typing import Dict, List, Optional, Sequence, Tuple
 import numpy as np
 
-from ..benchmark.environment import NonStationaryTaskEnvironment
+from ..benchmark.agent_interface import AgentEnvironmentInterface
 from ..benchmark.llm_backbone import CalibratedSymbolicLLMBackbone
-from ..benchmark.types import EpisodeTelemetry, MemoryEntry, RolloutResult, TaskInstance
+from ..benchmark.types import AgentEpisodeOutcome, MemoryEntry, RolloutResult, TaskInstance
+
+
+def _require_agent_interface(env: AgentEnvironmentInterface) -> None:
+    if not isinstance(env, AgentEnvironmentInterface):
+        raise TypeError(
+            "Hard oracle boundary violation: agents accept strictly `AgentEnvironmentInterface`, "
+            f"never raw evaluator instances (got {type(env).__name__})."
+        )
 
 
 def _estimate_entries_bytes(entries: Sequence[MemoryEntry]) -> int:
@@ -45,14 +53,13 @@ class BaseExperimentalAgent:
         self.seed = seed
         self.backbone = CalibratedSymbolicLLMBackbone(seed=seed)
 
-    def run_episode(
+    def act_on_episode(
         self,
         task: TaskInstance,
-        env: NonStationaryTaskEnvironment,
-        experiment_name: str,
+        env: AgentEnvironmentInterface,
         max_trials: int = 2,
         learn: bool = True,
-    ) -> EpisodeTelemetry:
+    ) -> AgentEpisodeOutcome:
         raise NotImplementedError
 
     def active_memory_count(self) -> int:
@@ -67,14 +74,14 @@ class StaticAgent(BaseExperimentalAgent):
 
     name = "Baseline A: Static"
 
-    def run_episode(
+    def act_on_episode(
         self,
         task: TaskInstance,
-        env: NonStationaryTaskEnvironment,
-        experiment_name: str,
+        env: AgentEnvironmentInterface,
         max_trials: int = 2,
         learn: bool = True,
-    ) -> EpisodeTelemetry:
+    ) -> AgentEpisodeOutcome:
+        _require_agent_interface(env)
         _ = learn
         t0 = time.perf_counter()
         p_tok_ep, c_tok_ep = 0, 0
@@ -99,11 +106,7 @@ class StaticAgent(BaseExperimentalAgent):
 
         dt_ms = (time.perf_counter() - t0) * 1000.0
         assert best_res is not None
-        return env.finalize_episode_telemetry(
-            experiment_name=experiment_name,
-            agent_name=self.name,
-            seed=self.seed,
-            task=task,
+        return AgentEpisodeOutcome(
             best_trial_idx=best_trial_idx,
             trials_used=trials_used,
             strategy_evaluations=0,
@@ -149,14 +152,14 @@ class ConventionalMemoryAgent(BaseExperimentalAgent):
         scored.sort(key=lambda x: x[0], reverse=True)
         return [m for _, m in scored[: self.top_k]], len(candidates)
 
-    def run_episode(
+    def act_on_episode(
         self,
         task: TaskInstance,
-        env: NonStationaryTaskEnvironment,
-        experiment_name: str,
+        env: AgentEnvironmentInterface,
         max_trials: int = 2,
         learn: bool = True,
-    ) -> EpisodeTelemetry:
+    ) -> AgentEpisodeOutcome:
+        _require_agent_interface(env)
         t0 = time.perf_counter()
         p_tok_ep, c_tok_ep = 0, 0
         retrieved, eval_count = self._retrieve(task)
@@ -217,11 +220,7 @@ class ConventionalMemoryAgent(BaseExperimentalAgent):
 
         dt_ms = (time.perf_counter() - t0) * 1000.0
         assert best_res is not None
-        return env.finalize_episode_telemetry(
-            experiment_name=experiment_name,
-            agent_name=self.name,
-            seed=self.seed,
-            task=task,
+        return AgentEpisodeOutcome(
             best_trial_idx=best_trial_idx,
             trials_used=trials_used,
             strategy_evaluations=eval_count,
@@ -231,7 +230,6 @@ class ConventionalMemoryAgent(BaseExperimentalAgent):
             prompt_tokens=p_tok_ep,
             completion_tokens=c_tok_ep,
             shift_detected=False,
-            memory_entries=self.memory,
         )
 
     def active_memory_count(self) -> int:
@@ -261,14 +259,14 @@ class ReflectionAgent(BaseExperimentalAgent):
             out.extend(buf)
         return out
 
-    def run_episode(
+    def act_on_episode(
         self,
         task: TaskInstance,
-        env: NonStationaryTaskEnvironment,
-        experiment_name: str,
+        env: AgentEnvironmentInterface,
         max_trials: int = 2,
         learn: bool = True,
-    ) -> EpisodeTelemetry:
+    ) -> AgentEpisodeOutcome:
+        _require_agent_interface(env)
         t0 = time.perf_counter()
         p_tok_ep, c_tok_ep = 0, 0
         buf = self.domain_buffers.get(task.domain, [])
@@ -382,11 +380,7 @@ class ReflectionAgent(BaseExperimentalAgent):
         all_mem = self._all_entries()
         dt_ms = (time.perf_counter() - t0) * 1000.0
         assert best_res is not None
-        return env.finalize_episode_telemetry(
-            experiment_name=experiment_name,
-            agent_name=self.name,
-            seed=self.seed,
-            task=task,
+        return AgentEpisodeOutcome(
             best_trial_idx=best_trial_idx,
             trials_used=trials_used,
             strategy_evaluations=eval_count,
@@ -396,8 +390,6 @@ class ReflectionAgent(BaseExperimentalAgent):
             prompt_tokens=p_tok_ep,
             completion_tokens=c_tok_ep,
             shift_detected=False,
-            memory_entries=all_mem,
-            include_reflection_avoid=True,
         )
 
     def active_memory_count(self) -> int:
@@ -478,14 +470,14 @@ class ExperienceReplayAgent(BaseExperimentalAgent):
         if len(self.replay_buffer) > self.max_buffer:
             self.replay_buffer = self.replay_buffer[-self.max_buffer :]
 
-    def run_episode(
+    def act_on_episode(
         self,
         task: TaskInstance,
-        env: NonStationaryTaskEnvironment,
-        experiment_name: str,
+        env: AgentEnvironmentInterface,
         max_trials: int = 2,
         learn: bool = True,
-    ) -> EpisodeTelemetry:
+    ) -> AgentEpisodeOutcome:
+        _require_agent_interface(env)
         t0 = time.perf_counter()
         p_tok_ep, c_tok_ep = 0, 0
         recs, eval_count = self._retrieve_replay(task)
@@ -541,11 +533,7 @@ class ExperienceReplayAgent(BaseExperimentalAgent):
 
         dt_ms = (time.perf_counter() - t0) * 1000.0
         assert best_res is not None
-        return env.finalize_episode_telemetry(
-            experiment_name=experiment_name,
-            agent_name=self.name,
-            seed=self.seed,
-            task=task,
+        return AgentEpisodeOutcome(
             best_trial_idx=best_trial_idx,
             trials_used=trials_used,
             strategy_evaluations=eval_count,
@@ -555,7 +543,6 @@ class ExperienceReplayAgent(BaseExperimentalAgent):
             prompt_tokens=p_tok_ep,
             completion_tokens=c_tok_ep,
             shift_detected=False,
-            memory_entries=self.replay_buffer,
         )
 
     def active_memory_count(self) -> int:
