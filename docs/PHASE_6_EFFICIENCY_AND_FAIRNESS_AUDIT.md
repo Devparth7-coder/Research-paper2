@@ -23,12 +23,13 @@ In default mode, EVSA invokes `VALIDATED` workflows as compiled deterministic op
 
 ---
 
-## 2. Separation of Local CPU Telemetry vs. Projected Token Economics (`Experiment 6`)
+## 2. Separation of Measured CPU/Rollout Telemetry vs. Logical Memory & Character-Based Token Projections (`Experiment 6`)
 
-`experiments/processed/exp6_efficiency_summary.csv` strictly separates directly measured local hardware metrics from analytical LLM token cost projections (`$0.00` commercial API spend):
-1. **Directly Measured Local CPU & Memory Footprint (`480` Tasks/Seed)**:
-   - Persistent repository footprint: **`13.14 ± 1.92 KB`** for EVSA (`48.55` total strategy records across tiers), i.e., **`8.1x` smaller** than `Conventional Memory` (`106.09 KB`) and **`2.3x` smaller** than `Experience Replay` (`29.87 KB`).
-   - Total environment rollouts across 480 tasks: **`590.45 ± 12.30`** for EVSA vs. `645.30–651.35` across baselines (saving `~55–61` rollouts/seed by solving adapted tasks on trial 1).
-   - Sub-millisecond Python/NumPy bookkeeping latency (`< 0.7 ms/task` on virtualized Xeon @ 2.60 GHz), negligible (`< 0.35%`) relative to real tool/LLM inference latencies (`200–2,000 ms`).
-2. **Analytically Projected Token & USD Ledger**:
-   - Modeled at `$2.50 / $10.00` per $10^6$ input/output tokens: EVSA projects **`46,758` total tokens** (**`$0.213`**, lowest projected cost among all five architectures) and **`0.117` SR points per `10k` projected tokens** (`1.83x` `Static` and `4.68x` `Reflection`).
+`experiments/processed/exp6_efficiency_summary.csv` distinguishes directly measured local runtime/rollout counts from fixed-record logical memory estimates and character-based LLM token cost projections (`$0.00` commercial API spend):
+1. **Directly Measured Local CPU Latency & Rollout Counts (`480` Tasks/Seed)**:
+   - Sub-millisecond Python/NumPy bookkeeping latency measured via `time.perf_counter()`: **`0.621 ± 0.065 ms/task`** (`403.45 ms` across 480 tasks on virtualized Xeon @ 2.60 GHz), negligible (`< 0.35%`) relative to real tool/LLM inference latencies (`200–2,000 ms`).
+   - Directly counted environment rollouts across 480 tasks: **`590.45 ± 12.30`** for EVSA vs. `645.30–651.35` across baselines (saving `~55–61` rollouts/seed by solving adapted tasks on trial 1).
+2. **Analytical Fixed-Record Logical Memory Estimate (`memory_bytes`)**:
+   - Evaluated via deterministic per-record byte constants (`264 B` per active `StrategyRecord` + up to `128 * 48 B` capped tombstones in `StrategyRepository.memory_bytes()`, vs. `272 B` per baseline buffer entry—representing serialized logical storage rather than Python interpreter object/heap RSS): **`13.14 ± 1.92 KB`** for EVSA (`48.55` total strategy records across tiers), i.e., **`8.1x` smaller** than `Conventional Memory` (`106.09 KB`) and **`2.3x` smaller** than `Experience Replay` (`29.87 KB`).
+3. **Character-Based Projected Token & USD Ledger (`TokenUsageLedger`)**:
+   - Computed from serialized prompt/completion character lengths (`len(text) / 3.8` + framing constants, rather than a model-specific BPE tokenizer or live API billing) at `$2.50 / $10.00` per $10^6$ input/output tokens: EVSA projects **`46,758` total tokens** (**`$0.213`**, lowest projected cost among all five architectures) and **`0.117` SR points per `10k` projected tokens** (`1.83x` `Static` and `4.68x` `Reflection`).

@@ -23,10 +23,11 @@
    - Exports explicitly labelled pure-test sensitivity families (`sensitivity_t_pvalue_holm_global74`: **`60 / 74`** significant; `sensitivity_wilcoxon_pvalue_holm_global74`: **`57 / 74`** significant), verified to `< 1e-15` by `test_reproducible_global74_holm_ledger`.
 4. **Cross-Platform Windows + Linux Reproducibility**:
    - Replaced Linux-only `lscpu | grep ...` (`shell=True`) in `experiments/run_complete_suite.py` with cross-platform pure-Python/stdlib `detect_cpu_model()` (`winreg` / `PROCESSOR_IDENTIFIER` on Windows, `/proc/cpuinfo` on Linux, `sysctl` without `shell=True` on macOS, `platform.processor()` fallback) and explicit `encoding="utf-8"` file I/O (`test_cross_platform_cpu_detection_and_utf8_safety`).
-   - Expanded `.github/workflows/ci.yml` to run on both `ubuntu-latest` (`Python 3.11`, `3.12`, `3.13`) and `windows-latest` (`Python 3.13`).
-5. **Release Timestamp Alignment & Honest Remote Tag/CI Verification**:
-   - Aligned manuscript, `CITATION.cff`, release notes, and regenerated manifests to **`9 November 2026` (`2026-11-09`)**.
-   - Local clean-clone verification confirms **`16 / 16` passing tests** and full artifact regeneration. Remote GitHub tag creation and GitHub Actions check-run completion occur **only after** pushing both `main` and the annotated tag `v2.0.2` to `origin`.
+   - Expanded `.github/workflows/ci.yml` into a 4-leg cross-platform test matrix (`ubuntu-latest` Python `3.11`, `3.12`, `3.13` and `windows-latest` Python `3.13` running `python -m pytest -v tests/test_evsa_suite.py`) plus a dedicated `Deterministic Parity & DOCX Build Check` job.
+5. **Release Timestamp Alignment, Verified Cross-Platform CI & Remote Tag Verification**:
+   - Aligned manuscript, `CITATION.cff`, release notes, and regenerated manifests to **`9 November 2026` (`2026-11-09`)**, and canonical repository metadata to **`https://github.com/Devparth7-coder/EVSA`**.
+   - Local clean-clone verification confirms **`18 / 18` passing tests** (`tests/test_evsa_suite.py`, including Wilcoxon tie/zero + percentile bootstrap and quarantine tombstone lifecycle tests), and live GitHub Actions CI on `https://github.com/Devparth7-coder/EVSA` (`workflow run #43252668879` on `main` commit `6316f48`, `2026-11-12`) has **passed all `5 / 5` jobs** (`ubuntu-latest` Python `3.11`, `3.12`, `3.13`, `windows-latest` Python `3.13`, and `Deterministic Parity & DOCX Build Check`).
+   - Annotated tag `v2.0.2` publication is intentionally deferred until all release materials are consistent; once the final commit and `v2.0.2` tag are pushed to `origin`, `python experiments/verify_github_release.py --tag v2.0.2` verifies remote tag resolution and green check-runs on the tagged commit.
 
 ---
 

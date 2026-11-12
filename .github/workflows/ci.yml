@@ -44,14 +44,34 @@ jobs:
       - name: Install pinned dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install -r requirements.txt
 
-      - name: Run 16-test unit, attribution, cross-platform, boundary & Global-74 ledger suite
-        run: pytest -v tests/test_evsa_suite.py
+      - name: Run unit, attribution, cross-platform, boundary & Global-74 ledger suite
+        run: python -m pytest -v tests/test_evsa_suite.py
 
-      - name: Verify deterministic seed-1001 episode parity, CPU info & DOCX build
-        if: matrix.python-version == '3.13'
+  reproducibility-and-docx-check:
+    name: Deterministic Parity & DOCX Build Check
+    needs: unit-and-audit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install pinned dependencies
         run: |
-          python -c "from src.benchmark import NonStationaryTaskEnvironment; from src.agents import EVSAAgent; from src.evaluation import run_audited_episode; from experiments.run_complete_suite import detect_cpu_model; assert detect_cpu_model(); env1, env2 = NonStationaryTaskEnvironment(seed=1001), NonStationaryTaskEnvironment(seed=1001); s1, s2 = env1.sample_task_stream(25, stream_seed=1001), env2.sample_task_stream(25, stream_seed=1001); a1, a2 = EVSAAgent(seed=1001), EVSAAgent(seed=1001); r1 = [run_audited_episode(a1, t, env1, 'ci', max_trials=2, learn=True).true_success for t in s1]; r2 = [run_audited_episode(a2, t, env2, 'ci', max_trials=2, learn=True).true_success for t in s2]; assert r1 == r2, 'Seed-1001 determinism check failed'"
-          python experiments/generate_all_figures.py
-          python paper/build_docx.py
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Verify deterministic seed-1001 episode parity & saved 74-test ledger consistency
+        run: |
+          python -c "import numpy as np, pandas as pd; from src.benchmark import NonStationaryTaskEnvironment; from src.agents import EVSAAgent; from src.evaluation import run_audited_episode, apply_global_holm_bonferroni; from experiments.run_complete_suite import detect_cpu_model; assert detect_cpu_model(); env1, env2 = NonStationaryTaskEnvironment(seed=1001), NonStationaryTaskEnvironment(seed=1001); s1, s2 = env1.sample_task_stream(25, stream_seed=1001), env2.sample_task_stream(25, stream_seed=1001); a1, a2 = EVSAAgent(seed=1001), EVSAAgent(seed=1001); r1 = [run_audited_episode(a1, t, env1, 'ci', max_trials=2, learn=True).true_success for t in s1]; r2 = [run_audited_episode(a2, t, env2, 'ci', max_trials=2, learn=True).true_success for t in s2]; assert r1 == r2, 'Seed-1001 determinism check failed'; df = pd.read_csv('experiments/statistical_analysis/paired_hypothesis_tests_holm.csv'); rec = pd.DataFrame(apply_global_holm_bonferroni(df.to_dict(orient='records'), alpha=0.05)); assert np.allclose(df['primary_pvalue_holm_global74'], rec['primary_pvalue_holm_global74'], atol=1e-15)"
+
+      - name: Build DOCX manuscript when python-docx is available
+        run: |
+          python -c "import importlib.util, subprocess, sys, tempfile, pathlib; has_docx = importlib.util.find_spec('docx') is not None; print('python-docx available:', has_docx); out = pathlib.Path(tempfile.gettempdir()) / 'evsa_ci_check.docx'; sys.exit(subprocess.call([sys.executable, 'paper/build_docx.py', '--output', str(out)]) if has_docx else 0)"

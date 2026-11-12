@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Cross-platform post-push GitHub tag, CI check-run, and release asset verifier
-for Devparth7-coder/EVSA-Research-Paper (pure Python stdlib, Windows/Linux/macOS).
+for Devparth7-coder/EVSA (pure Python stdlib, Windows/Linux/macOS).
 
 Usage after pushing `main` and tag `v2.0.2` to GitHub:
     python experiments/verify_github_release.py --tag v2.0.2
@@ -78,7 +78,7 @@ def verify_remote_release(repo: str, tag: str, require_release_assets: bool = Fa
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Verify remote GitHub tag, CI check-runs, and release.")
-    parser.add_argument("--repo", default="Devparth7-coder/EVSA-Research-Paper")
+    parser.add_argument("--repo", default="Devparth7-coder/EVSA")
     parser.add_argument("--tag", default="v2.0.2")
     parser.add_argument("--require-release", action="store_true")
     args = parser.parse_args()

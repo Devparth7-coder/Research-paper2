@@ -38,6 +38,15 @@ class StrategyRepository:
         return self.records.get(strategy_id)
 
     def add(self, record: StrategyRecord) -> StrategyRecord:
+        prev = self.records.get(record.strategy_id)
+        if (
+            prev is not None
+            and prev is not record
+            and prev.status == StrategyStatus.QUARANTINED
+        ):
+            if record.invalidated_episode is None:
+                record.invalidated_episode = prev.invalidated_episode
+            record.quarantine_count = max(record.quarantine_count, prev.quarantine_count)
         self.records[record.strategy_id] = record
         return record
 

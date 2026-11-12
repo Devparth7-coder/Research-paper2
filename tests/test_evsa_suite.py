@@ -1,4 +1,4 @@
-"""Comprehensive unit, hard-interface-boundary, and scientific integrity test suite for EVSA v2.0.1."""
+"""Comprehensive unit, hard-interface-boundary, and scientific integrity test suite for EVSA v2.0.2."""
 
 from __future__ import annotations
 
@@ -56,8 +56,9 @@ from src.evaluation import (
     minimum_detectable_dz,
     paired_statistical_comparison,
     run_audited_episode,
+    summarize_seed_distribution,
 )
-from src.memory import AdaptiveMemoryManager, HypothesisGenerator, StrategyRepository
+from src.memory import AdaptiveMemoryManager, HypothesisGenerator, StrategyRepository, make_strategy_id
 from src.retrieval import StrategyRetriever
 from src.validation import ConfidenceEstimator, EvidenceValidationEngine
 
@@ -518,20 +519,45 @@ def test_documentation_references_exact_source_symbols() -> None:
     known_tests = {name for name in globals() if name.startswith("test_")} | {
         "test_independent_researcher_attribution_zero_college_mentions",
         "test_cross_platform_cpu_detection_and_utf8_safety",
+        "test_wilcoxon_ties_zeros_and_percentile_bootstrap",
+        "test_quarantine_tombstone_and_readmission_lifecycle",
     }
     for doc_path in doc_paths:
         assert doc_path.exists(), f"Missing documentation file {doc_path}"
         txt = doc_path.read_text(encoding="utf-8")
         assert "21-section" not in txt, f"Stale section count in {doc_path.name}"
+        assert "EVSA-Research-Paper" not in txt, f"Stale repo slug in {doc_path.name}"
+        for stale_16 in ("16-test", "16-Test", "16 / 16", "16/16", "16 automated tests", "# 16 unit"):
+            assert stale_16 not in txt, f"Stale 16-test claim '{stale_16}' in {doc_path.name}"
         for rel_src in re.findall(r"`(src/[A-Za-z0-9_./]+\.py)`", txt):
             assert (ROOT / rel_src).exists(), f"{doc_path.name} references missing file {rel_src}"
         for tname in re.findall(r"`(test_[A-Za-z0-9_]+)`", txt):
             if tname != "test_":
                 assert tname in known_tests, f"{doc_path.name} references missing test {tname}"
 
-    assert (ROOT / ".gitignore").exists()
+    gitignore_path = ROOT / ".gitignore"
+    assert gitignore_path.exists()
+    gitignore_lines = {
+        ln.strip()
+        for ln in gitignore_path.read_text(encoding="utf-8").splitlines()
+        if ln.strip() and not ln.strip().startswith("#")
+    }
+    for must_track in ("experiments/", "figures/", "tables/", "paper/", "src/", "docs/"):
+        assert must_track not in gitignore_lines, f"{must_track} must never be ignored in .gitignore"
+
     ci_txt = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     assert "ubuntu-latest" in ci_txt and "windows-latest" in ci_txt
+    assert "python -m pytest -v tests/test_evsa_suite.py" in ci_txt
+
+    cff_txt = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+    verifier_txt = (ROOT / "experiments" / "verify_github_release.py").read_text(encoding="utf-8")
+    tex_txt = (ROOT / "paper" / "research_paper.tex").read_text(encoding="utf-8")
+    assert 'repository-code: "https://github.com/Devparth7-coder/EVSA"' in cff_txt
+    assert 'default="Devparth7-coder/EVSA"' in verifier_txt
+    assert "EVSA-Research-Paper" not in verifier_txt
+    assert "https://github.com/Devparth7-coder/EVSA" in tex_txt
+    assert "EVSA-Research-Paper" not in tex_txt
+    assert "16-test" not in tex_txt and "18-test" in tex_txt
     req_lines = [
         ln.strip() for ln in (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines()
         if ln.strip() and not ln.strip().startswith("#")
@@ -582,34 +608,212 @@ def test_independent_researcher_attribution_zero_college_mentions() -> None:
         assert "Independent Research in Artificial Intelligence" in content
 
 
-def test_cross_platform_cpu_detection_and_utf8_safety(monkeypatch) -> None:
+def test_cross_platform_cpu_detection_and_utf8_safety(monkeypatch, tmp_path) -> None:
     """Verify run_complete_suite uses cross-platform CPU detection without lscpu or shell=True."""
+    import contextlib
     import importlib.util
     import platform
+    import subprocess
     import sys
+    import types
+
+    for checked_script in (
+        ROOT / "experiments" / "run_complete_suite.py",
+        ROOT / "paper" / "build_docx.py",
+        ROOT / "experiments" / "verify_github_release.py",
+    ):
+        src_txt = checked_script.read_text(encoding="utf-8")
+        assert "lscpu" not in src_txt
+        assert "shell=True" not in src_txt
 
     runner_path = ROOT / "experiments" / "run_complete_suite.py"
-    runner_src = runner_path.read_text(encoding="utf-8")
-    assert "lscpu" not in runner_src
-    assert "shell=True" not in runner_src
-
     spec = importlib.util.spec_from_file_location("_evsa_runner_mod", runner_path)
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
 
-    # Current platform check
+    # 1. Actual host platform check: must return a non-empty string without assuming CPU vendor
     cpu_now = mod.detect_cpu_model()
     assert isinstance(cpu_now, str) and len(cpu_now.strip()) > 0
 
-    # Mocked Windows environment fallback check
+    # 2. Windows registry primary path (mocked winreg so test runs identically on Linux & Windows)
+    fake_winreg = types.SimpleNamespace(
+        HKEY_LOCAL_MACHINE=1,
+        OpenKey=lambda root, subkey: contextlib.nullcontext("key_handle"),
+        QueryValueEx=lambda handle, value_name: ("ControlledRegistryCPU-Model 3.40GHz", 1),
+    )
     monkeypatch.setattr(sys, "platform", "win32")
-    monkeypatch.setenv("PROCESSOR_IDENTIFIER", "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel")
-    assert "Intel64" in mod.detect_cpu_model()
+    monkeypatch.setitem(sys.modules, "winreg", fake_winreg)
+    monkeypatch.setenv("PROCESSOR_IDENTIFIER", "ShouldNotBeUsedWhenRegistrySucceeds")
+    assert mod.detect_cpu_model() == "ControlledRegistryCPU-Model 3.40GHz"
 
-    # Mocked generic fallback check
+    # 3. Windows fallback path: block winreg (sys.modules["winreg"] = None) so real Windows
+    # runners also exercise PROCESSOR_IDENTIFIER fallback deterministically
+    monkeypatch.setitem(sys.modules, "winreg", None)
+    monkeypatch.setenv("PROCESSOR_IDENTIFIER", "ControlledEnvFallbackCPU-Model")
+    assert mod.detect_cpu_model() == "ControlledEnvFallbackCPU-Model"
+
+    # 4. Linux /proc/cpuinfo path via controlled temporary UTF-8 file
+    fake_cpuinfo = tmp_path / "cpuinfo"
+    fake_cpuinfo.write_text(
+        "processor\t: 0\nmodel name\t: ControlledLinuxCPU @ 2.90GHz\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(sys, "platform", "linux")
+    assert mod.detect_cpu_model(cpuinfo_path=fake_cpuinfo) == "ControlledLinuxCPU @ 2.90GHz"
+
+    # 5. macOS sysctl path without shell=True
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda cmd, **kwargs: types.SimpleNamespace(
+            returncode=0, stdout="ControlledAppleSilicon-M3\n"
+        ),
+    )
+    assert mod.detect_cpu_model() == "ControlledAppleSilicon-M3"
+
+    # 6. Generic platform fallback check
     monkeypatch.setattr(sys, "platform", "freebsd14")
     monkeypatch.setattr(platform, "processor", lambda: "")
     monkeypatch.setattr(platform, "machine", lambda: "amd64")
     assert mod.detect_cpu_model() == "amd64"
 
+
+def test_wilcoxon_ties_zeros_and_percentile_bootstrap() -> None:
+    """Verify Wilcoxon exact/tie/zero method accounting and 5,000-resample percentile bootstrap CIs."""
+    from scipy import stats
+
+    # Case 1: Strictly untied non-zero differences -> exact Wilcoxon null distribution
+    y_base = np.zeros(20)
+    x_untied = np.array([0.01 * (i + 1) * (1 if i % 3 != 0 else -1) for i in range(20)])
+    res_untied = paired_statistical_comparison(x_untied, y_base, "A", "B")
+    exact_ref = stats.wilcoxon(x_untied, zero_method="wilcox", alternative="two-sided", method="exact")
+    assert res_untied["n_zero_diffs"] == 0
+    assert res_untied["wilcoxon_n_nonzero"] == 20
+    assert res_untied["wilcoxon_has_ties"] is False
+    assert res_untied["wilcoxon_method"] == "exact"
+    assert np.isclose(res_untied["wilcoxon_pvalue"], exact_ref.pvalue, atol=1e-15)
+
+    # Case 2: Zero differences present alongside untied non-zero differences
+    x_with_zeros = x_untied.copy()
+    x_with_zeros[:3] = 0.0
+    res_zeros = paired_statistical_comparison(x_with_zeros, y_base, "A", "B")
+    assert res_zeros["n_zero_diffs"] == 3
+    assert res_zeros["wilcoxon_n_nonzero"] == 17
+    assert res_zeros["wilcoxon_has_ties"] is False
+    assert res_zeros["wilcoxon_method"] == "conditional_exact_wilcox_zeros_dropped"
+
+    # Case 3: Discrete ties with n_nonzero > 13 -> tie-adjusted asymptotic normal in SciPy 1.17.1
+    x_tied_large = np.array([0.05] * 10 + [0.10] * 8 + [-0.05] * 2)
+    res_tied_large = paired_statistical_comparison(x_tied_large, y_base, "A", "B")
+    asymp_ref = stats.wilcoxon(
+        x_tied_large, zero_method="wilcox", alternative="two-sided", method="asymptotic"
+    )
+    assert res_tied_large["wilcoxon_has_ties"] is True
+    assert res_tied_large["wilcoxon_method"] == "asymptotic_tie_adjusted"
+    assert np.isclose(res_tied_large["wilcoxon_pvalue"], asymp_ref.pvalue, atol=1e-15)
+
+    # Case 4: Discrete ties with n_nonzero <= 13 -> exact sign-permutation distribution
+    x_tied_small = np.array([0.05] * 6 + [0.10] * 4 + [-0.05] * 2 + [0.0] * 8)
+    res_tied_small = paired_statistical_comparison(x_tied_small, y_base, "A", "B")
+    assert res_tied_small["n_zero_diffs"] == 8
+    assert res_tied_small["wilcoxon_n_nonzero"] == 12
+    assert res_tied_small["wilcoxon_has_ties"] is True
+    assert res_tied_small["wilcoxon_method"] == "exact_sign_permutation"
+
+    # Case 5: Fewer than 3 non-zero differences -> conservative insufficient_nonzero fallback
+    x_degenerate = np.array([0.10, -0.05] + [0.0] * 18)
+    res_deg = paired_statistical_comparison(x_degenerate, y_base, "A", "B")
+    assert res_deg["wilcoxon_method"] == "insufficient_nonzero"
+    assert res_deg["wilcoxon_pvalue"] == 1.0
+
+    # Percentile bootstrap verification (n_boot=5000, boot_seed=2026)
+    vals = np.linspace(0.40, 0.72, 20)
+    summary = summarize_seed_distribution(vals, n_boot=5000, boot_seed=2026)
+    rng = np.random.default_rng(2026)
+    boot_means = rng.choice(vals, size=(5000, vals.size), replace=True).mean(axis=1)
+    lo, hi = np.percentile(boot_means, [2.5, 97.5])
+    assert np.isclose(summary["boot_ci95_low"], lo, atol=1e-15)
+    assert np.isclose(summary["boot_ci95_high"], hi, atol=1e-15)
+
+
+def test_quarantine_tombstone_and_readmission_lifecycle() -> None:
+    """Verify QUARANTINED tombstones resist failed-rollout resurrection and preserve audit history on re-admission."""
+    est = ConfidenceEstimator()
+    val = EvidenceValidationEngine(min_trials=3)
+    mgr = AdaptiveMemoryManager(est, use_applicability=False, tau_quarantine_shift=0.58)
+    repo = StrategyRepository()
+
+    preconds = ((0, 1), (1, 0), (2, 1))
+    plan = (2, 1, 3, 0)
+    sid = make_strategy_id("api_orchestration", preconds, plan)
+    task = TaskInstance(
+        task_id="t_q_1",
+        episode_idx=10,
+        domain="api_orchestration",
+        structural_predicates=(1, 0, 1, 0, 1),
+        surface_topic_id=0,
+        context_features=np.zeros(12),
+        query_embedding=np.ones(20) / np.sqrt(20),
+    )
+
+    # Admit and promote strategy across 3 clean successes
+    rec = None
+    for ep in (10, 11, 12):
+        rec = mgr.admit_or_merge_candidate(repo, task, preconds, plan, 1, ep, val)
+    assert rec is not None and rec.strategy_id == sid
+    assert rec.status == StrategyStatus.VALIDATED
+    assert repo.total_promoted == 1
+
+    # Quarantine on shift discount after a consecutive failure
+    rec.consecutive_failures = 1
+    mgr.apply_domain_shift_discount(repo, "api_orchestration", gamma_shift=0.35, tau_lcb=0.48, episode_idx=42)
+    assert rec.status == StrategyStatus.QUARANTINED
+    assert rec.invalidated_episode == 42
+    assert rec.quarantine_count == 1
+    assert repo.total_quarantined == 1
+
+    # Failed rollout on identical (domain, preconditions, plan) MUST NOT resurrect tombstone
+    after_fail = mgr.admit_or_merge_candidate(repo, task, preconds, plan, 0, 43, val)
+    assert after_fail is rec
+    assert rec.status == StrategyStatus.QUARANTINED
+    assert rec.invalidated_episode == 42
+    assert rec.quarantine_count == 1
+
+    # Positive evidence re-admits the SAME record in-place to probationary CANDIDATE, preserving audit history
+    readmitted = mgr.admit_or_merge_candidate(repo, task, preconds, plan, 1, 50, val)
+    assert readmitted is rec
+    assert repo.get(sid) is rec
+    assert rec.status == StrategyStatus.CANDIDATE
+    assert rec.n_trials == 1
+    assert rec.invalidated_episode == 42
+    assert rec.quarantine_count == 1
+
+    # Must complete full sequential validation (2 more positive trials -> n_trials == 3) before re-promotion
+    mgr.admit_or_merge_candidate(repo, task, preconds, plan, 1, 51, val)
+    assert rec.status == StrategyStatus.CANDIDATE
+    mgr.admit_or_merge_candidate(repo, task, preconds, plan, 1, 52, val)
+    assert rec.status == StrategyStatus.VALIDATED
+    assert repo.total_promoted == 2
+
+    # Second quarantine increments quarantine_count cleanly
+    rec.consecutive_failures = 1
+    mgr.apply_domain_shift_discount(repo, "api_orchestration", gamma_shift=0.35, tau_lcb=0.48, episode_idx=90)
+    assert rec.status == StrategyStatus.QUARANTINED
+    assert rec.invalidated_episode == 90
+    assert rec.quarantine_count == 2
+
+    # Direct StrategyRepository.add guard also preserves tombstone provenance if a fresh object shares sid
+    replacement = StrategyRecord(
+        strategy_id=sid,
+        domain="api_orchestration",
+        preconditions=preconds,
+        embedding=np.ones(20) / np.sqrt(20),
+        operator_plan=plan,
+        status=StrategyStatus.CANDIDATE,
+        created_episode=95,
+    )
+    repo.add(replacement)
+    assert replacement.invalidated_episode == 90
+    assert replacement.quarantine_count == 2

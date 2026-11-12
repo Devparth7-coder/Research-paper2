@@ -18,7 +18,14 @@ env/
 .npm/
 .arena/
 
-# LaTeX intermediate build artifacts (keep .tex, .bib, .pdf)
+# IDE & editor local settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# LaTeX intermediate build artifacts (keep .tex, .bib, .pdf, .docx)
 *.aux
 *.bbl
 *.blg

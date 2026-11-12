@@ -192,7 +192,7 @@ class EVSAAgent(BaseExperimentalAgent):
                         chosen_rec, res.observed_success, self.confidence, task.episode_idx
                     )
                     self.memory_mgr.record_transition_counters(
-                        self.repo, prev_status, new_status
+                        self.repo, prev_status, new_status, chosen_rec
                     )
 
                     # 3. Feed out-of-sample residual to CUSUM detector if a VALIDATED strategy ran;

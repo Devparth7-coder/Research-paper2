@@ -20,9 +20,9 @@
 
 ---
 
-## 2. Hard Capability Boundary for Oracle Isolation (`v2.0.1`)
+## 2. Capability-Restricted API Boundary for Accidental-Oracle Isolation (`v2.0.2`)
 
-To guarantee that no agent can inspect evaluator ground truth even accidentally:
+To guarantee that no benchmark agent can inspect evaluator ground truth through public APIs or object attributes (note: because agents and evaluator execute inside the same Python process, this is an engineering encapsulation boundary against accidental oracle leakage rather than an OS/process-level security sandbox against hostile code):
 1. **Purely Observable Data Structures (`src/benchmark/types.py`)**: `TaskInstance`, `RolloutResult`, and `AgentEpisodeOutcome` contain zero oracle attributes (`test_task_rollout_and_agent_outcome_have_zero_oracle_fields`).
 2. **Slot-Restricted Capability Handle (`src/benchmark/agent_interface.py`)**: `NonStationaryTaskEnvironment.make_agent_interface` wraps rollout execution inside `AgentEnvironmentInterface` (`__slots__ = ("__weakref__",)`, private `WeakKeyDictionary` dispatch, no `__dict__`), exposing **only** `evaluate_plan(task, executed_plan) -> RolloutResult`.
 3. **Runtime `TypeError` Guard & Evaluator-Side Telemetry (`src/evaluation/audit.py`)**: All five agents implement `act_on_episode(task, env: AgentEnvironmentInterface, ...)` and raise `TypeError` if passed a raw `NonStationaryTaskEnvironment` (`test_hard_interface_boundary_separates_agent_from_oracle`). Ground-truth `EpisodeTelemetry` is assembled exclusively post-episode inside `run_audited_episode`, and zero agent/memory/backbone modules import oracle types (`test_zero_oracle_leakage_across_all_agent_and_backbone_modules`).

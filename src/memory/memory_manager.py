@@ -48,11 +48,14 @@ class AdaptiveMemoryManager:
         repo: StrategyRepository,
         prev_status: StrategyStatus,
         new_status: StrategyStatus,
+        record: StrategyRecord | None = None,
     ) -> None:
         if prev_status != StrategyStatus.VALIDATED and new_status == StrategyStatus.VALIDATED:
             repo.total_promoted += 1
         if prev_status != StrategyStatus.QUARANTINED and new_status == StrategyStatus.QUARANTINED:
             repo.total_quarantined += 1
+            if record is not None:
+                record.quarantine_count += 1
 
     def admit_or_merge_candidate(
         self,
@@ -72,7 +75,12 @@ class AdaptiveMemoryManager:
             new_status = validation_engine.step_evidence(
                 existing, observed_success, self.confidence_estimator, episode_idx
             )
-            self.record_transition_counters(repo, prev_status, new_status)
+            self.record_transition_counters(repo, prev_status, new_status, existing)
+            return existing
+
+        # Tombstone policy: a QUARANTINED record is never resurrected by non-positive evidence.
+        if existing is not None and existing.status == StrategyStatus.QUARANTINED and int(observed_success) != 1:
+            existing.last_updated_episode = episode_idx
             return existing
 
         if self.use_applicability and int(observed_success) == 1:
@@ -90,12 +98,28 @@ class AdaptiveMemoryManager:
                 )
                 broadened = len(lgg_preconds) < len(peer.preconditions)
                 if 1 <= len(diffs) <= 2 and len(lgg_preconds) >= self.min_lgg_literals:
-                    was_validated = peer.status == StrategyStatus.VALIDATED
                     new_sid = make_strategy_id(task.domain, lgg_preconds, plan)
+                    target_existing = repo.get(new_sid)
+                    was_validated = peer.status == StrategyStatus.VALIDATED
+                    prior_invalidated_ep = (
+                        target_existing.invalidated_episode
+                        if (target_existing is not None and target_existing.status == StrategyStatus.QUARANTINED)
+                        else peer.invalidated_episode
+                    )
+                    prior_quarantine_cnt = (
+                        peer.quarantine_count
+                        + (
+                            target_existing.quarantine_count
+                            if (target_existing is not None and target_existing.status == StrategyStatus.QUARANTINED)
+                            else 0
+                        )
+                    )
                     if peer.strategy_id in repo.records:
                         del repo.records[peer.strategy_id]
                     peer.strategy_id = new_sid
                     peer.preconditions = lgg_preconds
+                    peer.invalidated_episode = prior_invalidated_ep
+                    peer.quarantine_count = prior_quarantine_cnt
                     peer.lgg_merge_count += 1
                     repo.lgg_merges += 1
                     emb_mix = 0.65 * peer.embedding + 0.35 * task.query_embedding
@@ -104,9 +128,12 @@ class AdaptiveMemoryManager:
 
                     self.confidence_estimator.update_posterior(peer, observed_success, episode_idx)
 
-                    if was_validated and broadened and validation_engine.validation_enabled:
-                        # Safe LGG: expanding a VALIDATED rule onto untested predicate coordinates
-                        # discounts excess pseudo-counts and requires 1 confirming trial to re-promote.
+                    if (
+                        (was_validated and broadened)
+                        or (target_existing is not None and target_existing.status == StrategyStatus.QUARANTINED)
+                    ) and validation_engine.validation_enabled:
+                        # Safe LGG / tombstone-broadened merge: discount excess pseudo-counts
+                        # and require confirming validation on the broadened subspace.
                         peer.alpha = 1.0 + self.lgg_discount_gamma * max(0.0, peer.alpha - 1.0)
                         peer.beta = 1.0 + self.lgg_discount_gamma * max(0.0, peer.beta - 1.0)
                         peer.status = StrategyStatus.CANDIDATE
@@ -122,8 +149,32 @@ class AdaptiveMemoryManager:
                     new_status = validation_engine.step_evidence(
                         peer, observed_success, self.confidence_estimator, episode_idx
                     )
-                    self.record_transition_counters(repo, prev_status, new_status)
+                    self.record_transition_counters(repo, prev_status, new_status, peer)
                     return peer
+
+        # Probationary in-place re-admission when new positive evidence arrives for a
+        # previously QUARANTINED deterministic strategy ID: preserves quarantine history
+        # (`invalidated_episode`, `quarantine_count`) and avoids duplicate record objects
+        # while requiring a fresh full multi-trial sequential validation cycle.
+        if existing is not None and existing.status == StrategyStatus.QUARANTINED:
+            repo.candidates_created += 1
+            existing.embedding = task.query_embedding.copy()
+            existing.alpha = 1.0
+            existing.beta = 1.0
+            existing.n_trials = 0
+            existing.n_successes = 0
+            existing.sprt_llr = 0.0
+            existing.consecutive_failures = 0
+            existing.status = StrategyStatus.CANDIDATE
+            existing.last_updated_episode = episode_idx
+            existing.created_task_id = task.task_id
+            self.confidence_estimator.update_posterior(existing, observed_success, episode_idx)
+            prev_status = existing.status
+            new_status = validation_engine.step_evidence(
+                existing, observed_success, self.confidence_estimator, episode_idx
+            )
+            self.record_transition_counters(repo, prev_status, new_status, existing)
+            return existing
 
         repo.candidates_created += 1
         rec = StrategyRecord(
@@ -149,7 +200,7 @@ class AdaptiveMemoryManager:
             rec, observed_success, self.confidence_estimator, episode_idx
         )
         repo.add(rec)
-        self.record_transition_counters(repo, prev_status, new_status)
+        self.record_transition_counters(repo, prev_status, new_status, rec)
         return rec
 
     def apply_domain_shift_discount(
@@ -178,6 +229,7 @@ class AdaptiveMemoryManager:
             if rec.consecutive_failures >= 1 or lcb < self.tau_quarantine_shift:
                 rec.status = StrategyStatus.QUARANTINED
                 rec.invalidated_episode = episode_idx
+                rec.quarantine_count += 1
                 repo.total_quarantined += 1
                 affected += 1
             else:
@@ -208,6 +260,7 @@ class AdaptiveMemoryManager:
                 elif challenger.consecutive_failures > leader.consecutive_failures:
                     challenger.status = StrategyStatus.QUARANTINED
                     challenger.invalidated_episode = episode_idx
+                    challenger.quarantine_count += 1
                     repo.total_quarantined += 1
 
     def prune_capacity(self, repo: StrategyRepository, domain: str) -> None:
@@ -228,4 +281,5 @@ class AdaptiveMemoryManager:
         for r in scored[:to_remove]:
             if r.status == StrategyStatus.CANDIDATE:
                 r.status = StrategyStatus.QUARANTINED
+                r.quarantine_count += 1
                 repo.total_quarantined += 1

@@ -4,10 +4,13 @@ Evaluation, Statistical Inference, and Power Analysis Engine (Module 10).
 Implements:
 - Task accuracy, relative improvement (%), adaptation gain, recovery rate (%)
 - Frequentist seed-level summary statistics (Mean, Median, SD, IQR, SEM, 95% t-CI,
-  95% percentile bootstrap CI)
-- Paired Student's t-test, exact Wilcoxon signed-rank test, Shapiro-Wilk diagnostic
+  5,000-resample 95% percentile bootstrap CI over seed means)
+- Paired Student's t-test, Wilcoxon signed-rank test (exact when non-zero paired
+  differences are untied; sign-permutation or tie-adjusted asymptotic normal
+  approximation when ties occur), and Shapiro-Wilk normality diagnostic
 - Paired Cohen's d_z, small-sample Hedges' g_z, rank-biserial correlation r_rb
 - Exact non-central t statistical power & minimum detectable effect size (MDES)
+  for two-sided paired t-tests
 - Holm-Bonferroni step-down family-wise error rate control (Holm, 1979)
 """
 
@@ -172,14 +175,30 @@ def paired_statistical_comparison(
         t_stat, t_p = 0.0, 1.0
 
     nonzero_diff = diff[np.abs(diff) > 1e-12]
-    if nonzero_diff.size >= 3:
-        w_res = stats.wilcoxon(nonzero_diff, zero_method="wilcox", alternative="two-sided")
+    n_zero_diffs = int(n - int(nonzero_diff.size))
+    n_nonzero = int(nonzero_diff.size)
+    if n_nonzero >= 3:
+        abs_nz = np.abs(nonzero_diff)
+        wilcoxon_has_ties = bool(np.unique(abs_nz).size < n_nonzero)
+        if not wilcoxon_has_ties:
+            wilcoxon_method = (
+                "exact" if n_zero_diffs == 0 else "conditional_exact_wilcox_zeros_dropped"
+            )
+        elif n_nonzero <= 13:
+            wilcoxon_method = "exact_sign_permutation"
+        else:
+            wilcoxon_method = "asymptotic_tie_adjusted"
+        w_res = stats.wilcoxon(
+            nonzero_diff, zero_method="wilcox", alternative="two-sided", method="auto"
+        )
         w_stat, w_p = float(w_res.statistic), float(w_res.pvalue)
-        ranks = stats.rankdata(np.abs(nonzero_diff))
+        ranks = stats.rankdata(abs_nz)
         pos_rank_sum = float(np.sum(ranks[nonzero_diff > 0]))
         neg_rank_sum = float(np.sum(ranks[nonzero_diff < 0]))
         rank_biserial = (pos_rank_sum - neg_rank_sum) / max(1.0, pos_rank_sum + neg_rank_sum)
     else:
+        wilcoxon_has_ties = False
+        wilcoxon_method = "insufficient_nonzero"
         w_stat, w_p, rank_biserial = 0.0, 1.0, 0.0
 
     cohens_dz = mean_diff / sd_diff if sd_diff > 1e-12 else 0.0
@@ -207,6 +226,10 @@ def paired_statistical_comparison(
         "shapiro_p": float(shapiro_p),
         "t_stat": t_stat,
         "t_pvalue": t_p,
+        "n_zero_diffs": n_zero_diffs,
+        "wilcoxon_n_nonzero": n_nonzero,
+        "wilcoxon_has_ties": wilcoxon_has_ties,
+        "wilcoxon_method": wilcoxon_method,
         "wilcoxon_stat": w_stat,
         "wilcoxon_pvalue": w_p,
         "primary_test": primary_test,

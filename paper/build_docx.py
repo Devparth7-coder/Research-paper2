@@ -6,6 +6,7 @@ tables, figures, equations, citations, and numbers with paper/research_paper.tex
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 from pathlib import Path
@@ -371,8 +372,8 @@ def main() -> None:
         elif "Computational Efficiency" in title:
             add_styled_table(
                 doc,
-                "Table 9: Experiment 6 — Directly measured local CPU/memory efficiency vs. projected token economics (N = 20 seeds).",
-                ["Agent", "Eval SR (%)", "CPU (ms/task)", "Rollouts", "Memory (KB)", "Est. Tokens*", "Est. USD*", "SR/10k Tok*"],
+                "Table 9: Experiment 6 — Directly measured local CPU/rollout telemetry vs. estimated logical memory and character-based token projections (N = 20 seeds).",
+                ["Agent", "Eval SR (%)", "CPU (ms/task)", "Rollouts", "Logical Mem (KB)*", "Est. Tokens*", "Est. USD*", "SR/10k Tok*"],
                 [
                     [r["agent"], f"{r['task_success_rate_mean']*100:.2f}",
                      f"{r['eval_time_ms_per_task_mean']:.3f} ± {r['eval_time_ms_per_task_sd']:.3f}",
@@ -384,13 +385,30 @@ def main() -> None:
             )
             add_figure(doc, "fig10_exp6_efficiency", "Figure 10: Experiment 6 Computational Efficiency and Resource Footprint (N = 20 Seeds).")
 
-    # 20. References (parsed directly from verified references.bib)
+    # 20. References (parsed directly from verified references.bib with balanced-brace support)
     doc.add_heading("References", level=1)
     bib_raw = (PAPER_DIR / "references.bib").read_text(encoding="utf-8")
     entries = re.findall(r"@\w+\{([^,]+),(.*?)\n\}", bib_raw, flags=re.S)
     for idx, (key, fields_txt) in enumerate(entries, start=1):
-        fdict = {m.group(1).lower(): clean_latex_text(m.group(2))
-                 for m in re.finditer(r"(\w+)\s*=\s*\{(.*?)\}", fields_txt, flags=re.S)}
+        fdict: dict[str, str] = {}
+        for m in re.finditer(r"(\w+)\s*=\s*", fields_txt):
+            fname = m.group(1).lower()
+            pos = m.end()
+            if pos < len(fields_txt) and fields_txt[pos] == "{":
+                depth, start = 0, pos + 1
+                while pos < len(fields_txt):
+                    if fields_txt[pos] == "{":
+                        depth += 1
+                    elif fields_txt[pos] == "}":
+                        depth -= 1
+                        if depth == 0:
+                            fdict[fname] = clean_latex_text(fields_txt[start:pos])
+                            break
+                    pos += 1
+            else:
+                end_m = re.match(r"([^,\n]+)", fields_txt[pos:])
+                if end_m:
+                    fdict[fname] = clean_latex_text(end_m.group(1))
         venue = fdict.get("booktitle") or fdict.get("journal") or ""
         yr = fdict.get("year", "")
         doi_url = fdict.get("doi") or fdict.get("url") or ""
@@ -398,7 +416,15 @@ def main() -> None:
         p = doc.add_paragraph(cite_line)
         p.paragraph_format.space_after = Pt(2)
 
-    out_docx = PAPER_DIR / "research_paper.docx"
+    parser = argparse.ArgumentParser(description="Build synchronized EVSA DOCX manuscript.")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=PAPER_DIR / "research_paper.docx",
+        help="Destination path for the generated .docx file.",
+    )
+    args = parser.parse_args()
+    out_docx = args.output
     doc.save(out_docx)
     print(f"Saved synchronized DOCX manuscript to {out_docx} ({out_docx.stat().st_size / 1024:.1f} KB)")
 

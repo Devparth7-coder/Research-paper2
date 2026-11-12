@@ -23,7 +23,7 @@ Phase 1 synthesizes 30 primary peer-reviewed and archival works across four thre
   - *Dynamic Cheatsheet* (`suzgun2026dynamic`, EACL 2026 Long Papers, pp. 7080–7106, `doi:10.18653/v1/2026.eacl-long.333`): test-time curated adaptive memory notes without multi-trial sequential hypothesis gating.
   - *ReasoningBank* (`ouyang2026reasoningbank`, ICLR 2026, 17 authors including Siru Ouyang, Jiawei Han, Chen-Yu Lee, and Tomas Pfister): distills reasoning strategies from self-judged successful and failed trajectories paired with Memory-aware Test-Time Scaling (`MaTTS`).
   - *AdaMEM* (`zhang2026adamem`, ICML 2026, *AdaMEM: Test-Time Adaptive Memory for Language Agents*): integrates offline long-term trajectory memory with dynamically synthesized short-term strategy memory and step-wise memory fine-tuning (`STEP-MFT`).
-  - *ExpRL* (`jin2026exprl`, Findings of EMNLP 2026): exploration bounds for reasoning-driven experience selection.
+  - *ExpRL* (`jin2026exprl`, Findings of EMNLP 2026, pp. 35524–35546, `doi:10.18653/2026.findings-emnlp.1666`, *ExpRL: Unified Non-Parametric and Parametric Experience Learning for LLM Agent Evolution*): unifies non-parametric experience memory with on-policy parametric reinforcement learning so memory and policy co-evolve.
 - **Memory Reliability, Confidence Calibration & Poisoning**:
   - Overconfidence of verbalized LLM uncertainty (`xiong2024can`, ICLR 2024), experience-following error propagation (`xiong2026memory`, ACL 2026), and memory/RAG poisoning attacks (*AgentPoison* `chen2024agentpoison`, NeurIPS 2024; *PoisonedRAG* `zou2025poisonedrag`, USENIX Security 2025).
 - **Sequential Testing, Bayesian Credible Bounds & Multiple Testing**:

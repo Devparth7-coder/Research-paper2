@@ -7,13 +7,13 @@
 **Release Version**: `v2.0.2` | **Release Date**: 9 November 2026 | **License**: MIT  
 
 **Canonical Repository Links**:
-- **Repository Root**: [https://github.com/Devparth7-coder/EVSA-Research-Paper](https://github.com/Devparth7-coder/EVSA-Research-Paper)
-- **Seven Research Phase Dossiers (`docs/`)**: [docs](https://github.com/Devparth7-coder/EVSA-Research-Paper/tree/main/docs)
-- **LaTeX & DOCX Manuscript (`paper/`)**: [paper](https://github.com/Devparth7-coder/EVSA-Research-Paper/tree/main/paper)
-- **Capability-Isolated Python Source (`src/`)**: [src](https://github.com/Devparth7-coder/EVSA-Research-Paper/tree/main/src)
-- **74-Test Statistical & Direct Global-74 Holm Ledger (`experiments/statistical_analysis/`)**: [experiments/statistical_analysis](https://github.com/Devparth7-coder/EVSA-Research-Paper/tree/main/experiments/statistical_analysis)
-- **Raw Seed-Level Experimental Logs (`experiments/raw/`)**: [experiments/raw](https://github.com/Devparth7-coder/EVSA-Research-Paper/tree/main/experiments/raw)
-- **16-Test Cross-Platform Scientific Integrity Suite (`tests/`)**: [tests](https://github.com/Devparth7-coder/EVSA-Research-Paper/tree/main/tests)
+- **Repository Root**: [https://github.com/Devparth7-coder/EVSA](https://github.com/Devparth7-coder/EVSA)
+- **Seven Research Phase Dossiers (`docs/`)**: [docs](https://github.com/Devparth7-coder/EVSA/tree/main/docs)
+- **LaTeX & DOCX Manuscript (`paper/`)**: [paper](https://github.com/Devparth7-coder/EVSA/tree/main/paper)
+- **Capability-Isolated Python Source (`src/`)**: [src](https://github.com/Devparth7-coder/EVSA/tree/main/src)
+- **74-Test Statistical & Direct Global-74 Holm Ledger (`experiments/statistical_analysis/`)**: [experiments/statistical_analysis](https://github.com/Devparth7-coder/EVSA/tree/main/experiments/statistical_analysis)
+- **Raw Seed-Level Experimental Logs (`experiments/raw/`)**: [experiments/raw](https://github.com/Devparth7-coder/EVSA/tree/main/experiments/raw)
+- **18-Test Cross-Platform Scientific Integrity Suite (`tests/`)**: [tests](https://github.com/Devparth7-coder/EVSA/tree/main/tests)
 
 ---
 
@@ -40,9 +40,9 @@ Memory-augmented autonomous agents accumulate experiential trajectories, verbal 
 | **Exp 3: Stationary Control** | Unshifted Control Domain SR | **`82.21% ± 11.21%`** | `57.49% ± 8.91%` (`ConvMem`) | $d_z = 1.66$, primary $p_{\mathrm{Holm}} = 4.77 \times 10^{-5}$ ($p_{t,\mathrm{Holm}} = 8.16 \times 10^{-6}$) |
 | **Exp 4: Noisy Feedback ($\eta=0.35$)** | Rollout FAR / Cand. FPR / Clean Rec. | **`2.53%` / `11.32%` / `74.90%`** | `37.00%` FAR / `49.40%` Rec. | Clean Rec $d_z = 2.55, p_{\mathrm{Holm}} = 1.68 \times 10^{-9}$; FDP `-15.2 pp` ($p_{\mathrm{Holm}}=0.0063$; `65.44%` FRR) |
 | **Exp 5: Component Ablations** | `w/o Applicability` / `w/o Shift Detection` | `-24.75` pp stream / `-8.92` pp post-shift | `EVSA Full` (`53.81%` / `58.58%`) | Primary $p_{\mathrm{Holm}} \le 3.70 \times 10^{-3}$ (`w/o Val` $2.1\times$ FDP `70.6%` vs `33.2%`, SR diff ns $p=0.684$) |
-| **Exp 6: Efficiency & Projections** | Memory / Rollouts / Est. Tokens | `13.14 KB` / `590.5` / `46.8k tok` | `10.6–106.1 KB` / `645–651` | `0.117` SR per 10k est. tokens (`1.83x–4.68x` baselines; `< 1.0 ms/task` local CPU) |
+| **Exp 6: Efficiency & Projections** | Logical Mem / Rollouts / Est. Tokens | `13.14 KB` / `590.5` / `46.8k tok` | `10.6–106.1 KB` / `645–651` | `0.117` SR per 10k char-projected tokens (`1.83x–4.68x`; `< 1.0 ms/task` measured CPU) |
 
-Across all **74 paired hypothesis tests** (`19` pre-defined metric families; `66` paired-$t$ primary and `8` exact Wilcoxon primary selected via Shapiro-Wilk pre-testing before adjustment), **62 / 74** are significant at $\alpha=0.05$ under direct per-family primary Holm-Bonferroni (`apply_holm_bonferroni`) and **60 / 74** remain significant under direct single-pass Global-74 primary Holm-Bonferroni (`apply_global_holm_bonferroni`), alongside explicitly labelled pure-parametric (`60 / 74`) and pure-Wilcoxon (`57 / 74`) sensitivity families.
+Across all **74 paired hypothesis tests** (`19` pre-defined metric families; `66` paired-$t$ primary and `8` Wilcoxon signed-rank primary selected via Shapiro-Wilk pre-testing before adjustment—using SciPy 1.17.1 exact null on untied non-zero differences and tie-adjusted asymptotic normal $p$-values when discrete ties occur at $n_{\neq 0} > 13$), **62 / 74** are significant at $\alpha=0.05$ under direct per-family primary Holm-Bonferroni (`apply_holm_bonferroni`) and **60 / 74** remain significant under direct single-pass Global-74 primary Holm-Bonferroni (`apply_global_holm_bonferroni`), alongside explicitly labelled unconditional paired-$t$ (`60 / 74`) and unconditional Wilcoxon (`57 / 74`) sensitivity families.
 
 ---
 
@@ -78,7 +78,7 @@ Across all **74 paired hypothesis tests** (`19` pre-defined metric families; `66
 ├── src/
 │   ├── benchmark/
 │   │   ├── types.py                   # Observable TaskInstance, RolloutResult & AgentEpisodeOutcome
-│   │   ├── agent_interface.py         # Slot-restricted AgentEnvironmentInterface (hard oracle boundary)
+│   │   ├── agent_interface.py         # Slot-restricted AgentEnvironmentInterface (accidental-oracle API boundary)
 │   │   ├── environment.py             # ShiftBench-Sim v1.0 evaluator environment
 │   │   └── llm_backbone.py            # Non-oracle CalibratedSymbolicLLMBackbone
 │   ├── validation/
@@ -107,7 +107,7 @@ Across all **74 paired hypothesis tests** (`19` pre-defined metric families; `66
 │   ├── run_complete_suite.py          # Cross-platform deterministic execution & statistical runner
 │   ├── generate_all_figures.py        # Reproducible generator for all 10 PNG/PDF figures
 │   └── verify_github_release.py       # Post-push GitHub tag, Actions CI & Release API verifier
-├── tests/test_evsa_suite.py           # 16 unit, hard-boundary, attribution, Windows & ledger tests
+├── tests/test_evsa_suite.py           # 18 unit, boundary, attribution, Windows, Wilcoxon & lifecycle tests
 ├── figures/                           # 10 publication figures (.png @ 300 DPI + vector .pdf)
 ├── tables/                            # 9 CSV summary tables + summary_tables.md
 └── paper/
@@ -123,8 +123,8 @@ Across all **74 paired hypothesis tests** (`19` pre-defined metric families; `66
 ## Quick Start (Linux, Windows, or macOS)
 
 ```bash
-pip install -r requirements.txt
-pytest -v tests/test_evsa_suite.py
+python -m pip install -r requirements.txt
+python -m pytest -v tests/test_evsa_suite.py
 python experiments/run_complete_suite.py
 python experiments/generate_all_figures.py
 ```

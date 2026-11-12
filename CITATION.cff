@@ -8,7 +8,7 @@ authors:
 date-released: 2026-11-09
 version: "2.0.2"
 license: "MIT"
-repository-code: "https://github.com/Devparth7-coder/EVSA-Research-Paper"
+repository-code: "https://github.com/Devparth7-coder/EVSA"
 abstract: >-
   Evidence-Validated Strategy Adaptation (EVSA) is a statistical framework for
   reliable experience validation, applicability-gated retrieval with Safe LGG,

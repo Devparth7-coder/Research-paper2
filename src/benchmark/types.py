@@ -90,6 +90,7 @@ class StrategyRecord:
     invalidated_episode: Optional[int] = None
     created_task_id: str = ""
     lgg_merge_count: int = 0
+    quarantine_count: int = 0
 
     def matches_preconditions(self, predicates: Tuple[int, ...]) -> bool:
         """Evaluate symbolic applicability conjunction phi_h(psi_t)."""
