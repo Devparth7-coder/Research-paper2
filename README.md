@@ -7,7 +7,7 @@
 **Release Version**: `v2.0.2` | **Release Date**: 9 November 2026 | **License**: MIT  
 
 **Canonical Repository Links**:
-- **Repository Root**: [https://github.com/Devparth7-coder/EVSA](https://github.com/Devparth7-coder/EVSA)
+- **Repository Root**: [https://github.com/Devparth7-coder/EVSA](https://github.com/Devparth7-coder/Research-paper2)
 - **Seven Research Phase Dossiers (`docs/`)**: [docs](https://github.com/Devparth7-coder/EVSA/tree/main/docs)
 - **LaTeX & DOCX Manuscript (`paper/`)**: [paper](https://github.com/Devparth7-coder/EVSA/tree/main/paper)
 - **Capability-Isolated Python Source (`src/`)**: [src](https://github.com/Devparth7-coder/EVSA/tree/main/src)
